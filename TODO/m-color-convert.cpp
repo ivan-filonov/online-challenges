@@ -3,7 +3,10 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tuple>
+
 using namespace std;
+
 void cmyk(string s) {
 	istringstream ss {s};
 	char z;
@@ -18,17 +21,29 @@ void hex(string s) {
 	cout << (255&(v>>16)) << ',' << (255&(v>>8)) << ',' << (255&v);
 }
 
-void hsl(string s) {
-	istringstream ss {s};
+void hsv(string sp) {
+	istringstream ss {sp};
 	char z;
-	double h,s,l;
+	double h,s,v;
 	ss.ignore(4);
-	ss >> h >> z >> s >> z >> l >> z;
-	s *= .01;
-	l *= .01;
+	ss >> h >> z >> s >> z >> v >> z;
+	auto vmin=v * (100.0-s) * .01;
+	auto a = (v-vmin)*(((int)h%60)/60.0);
+	auto vinc = vmin + a;
+	auto vdec = v - a;
+	double r,g,b;
+	switch((int)std::floor(h/60)) {
+		case 0:	tie(r,g,b)=make_tuple(	v, 	vinc,	vmin);	break;
+		case 1:	tie(r,g,b)=make_tuple(	vdec,	v,	vmin);	break;
+		case 2:	tie(r,g,b)=make_tuple(	vmin,	v,	vinc);	break;
+		case 3:	tie(r,g,b)=make_tuple(	vmin,	vdec,	v);	break;
+		case 4:	tie(r,g,b)=make_tuple(	vinc,	vmin,	v);	break;
+		case 5:	tie(r,g,b)=make_tuple(	v,	vmin,	vdec);	break;
+	}
+	cout << lround(r*2.55) << ',' << lround(g*2.55) << ',' << lround(b*2.55);
 }
 
-void hsv(string s) {
+void hsl(string s) {
 	istringstream ss {s};
 	char z;
 }
