@@ -46,6 +46,10 @@ void hsv(string sp) {
 void hsl(string s) {
 	istringstream ss {s};
 	char z;
+	double h,s,l;
+	ss.ignore(4);
+	ss >> h >> z >> s >> z >> l >> z;
+	cout << "h = " << h << ", s = " << s << ", l = " << l << endl;
 }
 
 void process(string line) {
