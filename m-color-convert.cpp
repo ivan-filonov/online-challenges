@@ -43,13 +43,49 @@ void hsv(string sp) {
 	cout << lround(r*2.55) << ',' << lround(g*2.55) << ',' << lround(b*2.55);
 }
 
-void hsl(string s) {
-	istringstream ss {s};
+void hsl(string str) {
+	istringstream ss {str};
 	char z;
 	double h,s,l;
 	ss.ignore(4);
 	ss >> h >> z >> s >> z >> l >> z;
-	cout << "h = " << h << ", s = " << s << ", l = " << l << endl;
+	s *= .01;
+	l *= .01;
+	auto q = (l < .5) ? l * (1.0 + s) : (l + s - l * s);
+	auto p = 2.0 * l - q;
+	auto hk = h/360.0;
+	auto F1 = [](double x){
+		if(x < 0.0) {
+			return x + 1.0;
+		}
+		if( x > 1.0) {
+			return x - 1.0;
+		}
+		return x;
+	};
+	auto tr = F1(hk + 1.0/3.0);
+	auto tg = F1(hk);
+	auto tb = F1(hk - 1.0/3.0);
+	auto color = [=](double x) {
+		double res;
+		if(x < 1.0/6.0) {
+			res = p + ((q-p)*6.0*x);
+		}
+		else if(x < .5) {
+			res = q;
+		}
+		else if(x < 2.0/3.0) {
+			res = p + ((q-p)*(2.0/3.0-x)*6.0);
+		}
+		else {
+			res = p;
+		}
+		return lround(255.0 * res);
+	};
+	auto r = color(tr);
+	auto g = color(tg);
+	auto b = color(tb);
+	cout << r << ',' << g << ',' << b;
 }
 
 void process(string line) {
@@ -73,10 +109,11 @@ void process(string line) {
 	cout << ')' << endl;
 }
 
-int main() {
-	process("(0.56,0.94,0.21,0.02)");
-	process("HSL(359,0,0)");
-	process("HSV(276,33,7)");
-	process("#cfa9c4");
+int main(int _c, char** _v) {
+	ifstream stream(_v[1]);
+	string line;
+	while(std::getline(stream, line)) {
+		process(line);
+	}
 }
 
