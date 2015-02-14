@@ -10,6 +10,7 @@ void process_file(char*);
 int main(int _a, char ** _v) {
 	test();
 	process_file(_v[1]);
+	return 0;
 }
 
 void process(std::string s);
