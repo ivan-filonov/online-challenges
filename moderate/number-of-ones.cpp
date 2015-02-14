@@ -8,15 +8,15 @@
 void test();
 void process_file(char*);
 int main(int _a, char ** _v) {
-	test();
 	process_file(_v[1]);
 }
 
 void process(std::string s);
 
 void test() {
-	process("");
-	std::cout << "" << std::endl;
+	process("10");
+	process("22");
+	process("56");
 }
 
 void process_file(char* path) {
@@ -28,5 +28,11 @@ void process_file(char* path) {
 }
 
 void process(std::string s) {
-	std::cout << "TODO: procees line " << s << std::endl;
+	auto n = std::stol(s);
+	int res = 0;
+	while(n) {
+		res += (n&1);
+		n >>= 1;
+	}
+	std::cout << res << std::endl;
 }

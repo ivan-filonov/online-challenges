@@ -2,14 +2,32 @@
  * Common base C++ source for codeeval solutions.
  * */
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <string>
 
 void test();
 void process_file(char*);
 int main(int _a, char ** _v) {
-	test();
-	process_file(_v[1]);
+	for(int i = 1; i <= 12; ++i) {
+		std::cout << std::setw(0);
+		for(int j = 1; j <= 12; ++j) {
+//			if(i > 9) {
+//				if(2 == j) {
+//					std::cout << std::setw(3);
+//				}
+//				else if (3 <= j) {
+//					std::cout << std::setw(4);
+//				}
+//			} else {
+				if(j > 1) {
+					std::cout << std::setw(4);
+				}
+//			}
+			std::cout << i * j;
+		}
+		std::cout << std::endl;
+	}
 }
 
 void process(std::string s);

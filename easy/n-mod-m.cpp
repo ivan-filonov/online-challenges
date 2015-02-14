@@ -8,15 +8,14 @@
 void test();
 void process_file(char*);
 int main(int _a, char ** _v) {
-	test();
 	process_file(_v[1]);
 }
 
 void process(std::string s);
 
 void test() {
-	process("");
-	std::cout << "" << std::endl;
+	process("20,6");
+	process("2,3");
 }
 
 void process_file(char* path) {
@@ -28,5 +27,18 @@ void process_file(char* path) {
 }
 
 void process(std::string s) {
-	std::cout << "TODO: procees line " << s << std::endl;
+	auto delim = s.find(',');
+	auto n = std::stoi(s);
+	auto m = std::stoi(s.substr(delim+1));
+	auto mm = m;
+	while(n > (mm*2)) {
+		mm *= 2;
+	}
+	if(n > mm) {
+		n -= mm;
+	}
+	while(n > m) {
+		n -= m;
+	}
+	std::cout << n << std::endl;
 }
