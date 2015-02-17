@@ -1,6 +1,7 @@
 /*
  * Common base C++ source for codeeval solutions.
  * */
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -8,7 +9,7 @@
 void test();
 void process_file(char*);
 int main(int _a, char ** _v) {
-	test();
+//	test();
 	process_file(_v[1]);
 	return 0;
 }
@@ -16,8 +17,10 @@ int main(int _a, char ** _v) {
 void process(std::string s);
 
 void test() {
-	process("");
-	std::cout << ""  "\n";// std::endl for flush?
+	process("yellow");
+	std::cout << "y\n";// std::endl for flush?
+	process("tooth");
+	std::cout << "h\n";// std::endl for flush?
 }
 
 void process_file(char* path) {
@@ -29,5 +32,17 @@ void process_file(char* path) {
 }
 
 void process(std::string s) {
-	std::cout << "TODO: process line " << s << "\n";
+	if(s.empty()) {
+		return;
+	}
+	using std::begin;
+	using std::end;
+	while(std::count(begin(s), end(s), s[0]) > 1 ) {
+		char c = s.front();
+		size_t ofs = 0;
+		while(std::string::npos != (ofs = s.find(c, ofs))) {
+			s.erase(ofs, 1);
+		}
+	}
+	std::cout << s[0] <<"\n";
 }
