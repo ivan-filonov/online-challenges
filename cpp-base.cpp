@@ -29,5 +29,5 @@ void process_file(char* path) {
 }
 
 void process(std::string s) {
-	std::cout << "TODO: process line " << s << "\n";
+	std::cout << "s = '" << s << "'\n";
 }
