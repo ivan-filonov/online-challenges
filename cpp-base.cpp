@@ -7,9 +7,9 @@
 
 void test();
 void process_file(char*);
-int main(int _a, char ** _v) {
+int main(int argc, char ** argv) {
 	test();
-	process_file(_v[1]);
+	process_file(argv[1]);
 	return 0;
 }
 
