@@ -17,7 +17,8 @@ void process(std::string s);
 
 void test() {
 	process("");
-	std::cout << ""  "\n";// std::endl for flush?
+	std::cout << ""  "\n";
+  // std::endl or std::flush?
 }
 
 void process_file(char* path) {
