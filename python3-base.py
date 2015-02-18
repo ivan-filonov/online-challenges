@@ -7,8 +7,6 @@ def process(s):
 
 test_cases = open(sys.argv[1], 'r')
 for test in test_cases:
-    # ignore test if it is an empty line
-    # 'test' represents the test case, do something with it
     test=test.strip()
     if len(test)==0:
         continue
