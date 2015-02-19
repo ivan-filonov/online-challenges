@@ -10,7 +10,7 @@
 void test();
 void process_file(char*);
 int main(int argc, char ** argv) {
-	test();
+//	test();
 	process_file(argv[1]);
 	return 0;
 }
@@ -31,13 +31,13 @@ void process_file(char* path) {
 }
 
 void process(std::string s) {
-	std::cout << "s = '" << s << "'\n";
+//	std::cout << "s = '" << s << "'\n";
   std::istringstream ss(s);
   std::string t;
   std::getline(ss, t, ';');
-  auto wid = std::stoi(t);
-  std::getline(ss, t, ';');
   auto hei = std::stoi(t);
+  std::getline(ss, t, ';');
+  auto wid = std::stoi(t);
   std::vector<std::string> m;
   m.reserve(wid * hei);
   while(std::getline(ss, t, ' ')) {
@@ -49,46 +49,50 @@ void process(std::string s) {
             k21 = 1, k22 = 0;//y1 = k21*x + k22*y
   std::vector<int> lim { -1, wid, 0, hei};//borders, x bw [0]..[1], y bw [2]..[3]
   for(int i = 0 ; i < m.size(); ++i) {
-    std::cout << '"' << std::flush;
+      if( x || y ) {
+          std::cout << ' ';
+      }
+//    std::cout << '"' << std::flush;
     std::cout << m[x + y * wid];
-    std::cout << "\" "  << std::flush;
+//    std::cout << "\" "  << std::flush;
     bool rotate = false;
     int x1 = x + dx;
     int y1 = y + dy;
     if(dx) {
-      std::cout << " x" << dx << " " << std::flush;
+//      std::cout << " x" << dx << " " << std::flush;
       if(x1 == lim[0]) {
         rotate = true;
-        std::cout << "x = " << x << ", lim[0] = " << lim[0] << "\n";
+//        std::cout << "x = " << x << ", lim[0] = " << lim[0] << "\n";
         ++lim[0];
       } else if(x1 == lim[1]) {
         rotate = true;
-        std::cout << "x = " << x << ", lim[1] = " << lim[1] << "\n";
+//        std::cout << "x = " << x << ", lim[1] = " << lim[1] << "\n";
         --lim[1];
       }
     }
     if(dy) {
-      std::cout << " y" << dy << " " << std::flush;
+//      std::cout << " y" << dy << " " << std::flush;
       if(y1 == lim[2]) {
         rotate = true;
-        std::cout << "y = " << x << ", lim[2] = " << lim[2] << "\n";
+//        std::cout << "y = " << x << ", lim[2] = " << lim[2] << "\n";
         ++lim[2];
       } else if(y1 == lim[3]) {
         rotate = true;
-        std::cout << "y = " << x << ", lim[3] = " << lim[3] << "\n";
+//        std::cout << "y = " << x << ", lim[3] = " << lim[3] << "\n";
         --lim[3];
       }
     }
     if(rotate) {
-      std::cout << "before rotate: dx = " << dx << ", dy = " << dy << "\n" << std::flush;
+//      std::cout << "before rotate: dx = " << dx << ", dy = " << dy << "\n" << std::flush;
       int dx1 = k11 * dx + k12 * dy;
       int dy1 = k21 * dx + k22 * dy;
       dx = dx1;
       dy = dy1;
-      std::cout << "after rotate: dx = " << dx << ", dy = " << dy << "\n" << std::flush;
+//      std::cout << "after rotate: dx = " << dx << ", dy = " << dy << "\n" << std::flush;
     }
 //    std::cout << "[x = " << x << ", y = " << y << ", dx = " << dx << ", dy = " << dy << "]" << std::flush;
     x += dx;
     y += dy;
   }
+  std::cout << "\n";
 }
