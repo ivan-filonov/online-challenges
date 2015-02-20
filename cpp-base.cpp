@@ -1,9 +1,14 @@
 /*
  * Common base C++ source for codeeval solutions.
  * */
+#include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <iterator>
+#include <sstream>
 #include <string>
+#include <vector>
 
 void test();
 void process_file(char*);
@@ -28,6 +33,7 @@ void process_file(char* path) {
 	}
 }
 
-void process(std::string s) {
-	std::cout << "s = '" << s << "'\n";
+void process(std::string line) {
+	std::cout << "s = '" << line << "'\n";
+    std::istringstream ss { line };
 }
