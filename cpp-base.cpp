@@ -22,18 +22,18 @@ void process(std::string s);
 
 void test() {
 	process("");
-	std::cout << ""  "\n";// std::endl for flush?
+	std::cout << ""    "\n";
+    // std::endl for flush?
 }
 
 void process_file(char* path) {
 	std::ifstream stream(path);
-	std::string line;
-	while(std::getline(stream, line)) {
+	for(std::string line; std::getline(stream, line); ) {
 		process(line);
 	}
 }
 
 void process(std::string line) {
 	std::cout << "s = '" << line << "'\n";
-    std::istringstream ss { line };
+//    std::istringstream ss { line };
 }
