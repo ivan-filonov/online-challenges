@@ -13,7 +13,6 @@
 void test();
 void process_file(char*);
 int main(int argc, char ** argv) {
-	test();
 	process_file(argv[1]);
 	return 0;
 }
@@ -21,8 +20,12 @@ int main(int argc, char ** argv) {
 void process(std::string s);
 
 void test() {
-	process("");
-	std::cout << ""    "\n";
+    process("Hello World,World");
+	std::cout << "1"    "\n";
+    process("Hello CodeEval,CodeEval");
+	std::cout << "1"    "\n";
+    process("San Francisco,San Jose");
+	std::cout << "0"    "\n";
     // std::endl for flush?
 }
 
@@ -34,6 +37,11 @@ void process_file(char* path) {
 }
 
 void process(std::string line) {
-	std::cout << "s = '" << line << "'\n";
 //    std::istringstream ss { line };
+    int delim = line.find(',');
+    int lend = line.length() - 1;
+    int elen = lend - delim;
+    int ipos = delim - elen;
+    auto b = std::begin(line);
+    std::cout << (ipos >= 0 && std::equal(b + delim + 1, b + lend, b + ipos)) << "\n";
 }
