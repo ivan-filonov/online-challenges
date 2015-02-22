@@ -3,13 +3,11 @@
  * */
 #include <algorithm>
 #include <fstream>
-#include <iomanip>
 #include <iostream>
-#include <iterator>
-#include <regex>
-#include <sstream>
-#include <string>
 #include <vector>
+
+#include <regex.h>
+#include <cstring>
 
 void test();
 void process_file(char*);
@@ -52,12 +50,12 @@ void process_file(char* path) {
 }
 
 void process(std::string line) {
-  std::istringstream ss { line };
-  std::string base_exp;
-  ss >> base_exp;
+  std::vector<char> buf(line.length()+1, 0);
+  std::copy(line.begin(), line.end(), buf.begin());
+  std::string base_exp = strtok(buf.data(), " ");
   std::vector<std::string> v;
-  for(std::string t; ss >> t;) {
-    v.push_back(t);
+  for(char * t;t = strtok(0," ");) {
+      v.push_back(t);
   }
 
   //prepare regexp
@@ -81,11 +79,20 @@ void process(std::string line) {
       pattern += *it;
     }
   }
-  
-  std::regex rx(pattern);
+
+  regex_t rx;
+  if(regcomp(&rx, pattern.c_str(), 0)) {
+    throw std::exception();
+  }
+//  std::regex rx(pattern);
   bool mid = false;
   for(auto &s : v) {
-    if(!std::regex_match(s,rx)) {
+    regmatch_t m;
+    if(regexec(&rx, s.c_str(), 1, &m, 0)) {
+//    if(!std::regex_match(s,rx)) {
+      continue;
+    }
+    if(m.rm_so > 0 || m.rm_eo <s.length()) {
       continue;
     }
     if(mid) {
