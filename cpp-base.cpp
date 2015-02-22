@@ -13,8 +13,11 @@
 void test();
 void process_file(char*);
 int main(int argc, char ** argv) {
-	test();
-	process_file(argv[1]);
+    if( 1 ) {
+        test();
+    } else {
+        process_file(argv[1]);
+    }
 	return 0;
 }
 
