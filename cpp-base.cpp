@@ -1,6 +1,3 @@
-/*
- * Common base C++ source for codeeval solutions.
- * */
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
