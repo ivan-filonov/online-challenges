@@ -26,8 +26,16 @@ namespace {
 #ifdef TEST
   void test() {
     std::vector<std::string> v_test {
+      "1010 AAAAABBBBAAAA",
+      "00 AAAAAA",
+      "01001110 AAAABAAABBBBBBAAAAAAA",
+      "1100110 BBAABABBA",
     };
     std::vector<std::string> v_expect {
+      "Yes",
+      "Yes",
+      "Yes",
+      "No",
     };
     for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
       process(v_test[i]);
