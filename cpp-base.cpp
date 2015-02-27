@@ -14,7 +14,7 @@ namespace {
 int main(int argc, char ** argv) {
 #ifdef TEST
   test();
-#else
+#else //#ifdef TEST
   process_file(argv[1]);
 #endif //#ifdef TEST
 	return 0;
