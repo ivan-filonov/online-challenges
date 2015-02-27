@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
 
 #define TEST
@@ -69,7 +69,7 @@ namespace {
 //    std::cout << "n = " << n << ", k = " << k << ", a = " << a << ", b = " << b << ", c = " << c << ", r = " << r << "\n";
     std::vector<int> v(n);
     v[0] = a;
-    std::map<int,int> mm;
+    std::unordered_map<int,int> mm;
     mm[a]++;
     for(int i = 1; i < k; ++i) {
       v[i] = (v[i-1]*b+c)%r;
