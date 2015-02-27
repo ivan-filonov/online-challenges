@@ -1,6 +1,6 @@
 #include <fstream>
 #include <iostream>
-#include <set>
+#include <map>
 #include <sstream>
 #include <vector>
 
@@ -69,19 +69,20 @@ namespace {
 //    std::cout << "n = " << n << ", k = " << k << ", a = " << a << ", b = " << b << ", c = " << c << ", r = " << r << "\n";
     std::vector<int> v(n);
     v[0] = a;
+    std::map<int,int> mm;
+    mm[a]++;
     for(int i = 1; i < k; ++i) {
       v[i] = (v[i-1]*b+c)%r;
+      mm[v[i]]++;
     }
     for(int i = k; i < n; ++i) {
-      std::set<int> s;
-      for(int j = i - k; j < i; ++j) {
-        s.insert(v[j]);
-      }
       int j = 0;
-      while(s.find(j) != s.end()) {
+      while(mm[j] > 0) {
         ++j;
       }
       v[i] = j;
+      mm[j]++;
+      mm[v[i-k]]--;
     }
     std::cout << v.back() << "\n";
   }
