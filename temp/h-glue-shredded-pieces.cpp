@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +26,7 @@ int main(int argc, char ** argv) {
 namespace {
   using std::string;
   using std::vector;
+  using std::shared_ptr;
   template<typename K,typename V> using map = std::unordered_map<K,V>;
 
   void process(string s);
@@ -51,18 +53,51 @@ namespace {
     }
   }
 
+  struct item_t {
+    string s;
+    int left;
+    int right;
+    item_t(string &&s, int lm, int rm);
+  };
+
   void process(std::string line) {
 #ifdef TEST
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-    std::istringstream ss { line };
-    for(string t; std::getline(ss, t, '|'); ) {
-      if(t.empty()) {
-        continue;
+    
+    vector<shared_ptr<item_t>> items;
+  
+    {
+      std::istringstream ss { line };
+      map<string,int> markers;
+
+      for(string t; std::getline(ss, t, '|'); ) {
+        if(t.empty()) {
+          continue;
+        }
+        auto tr = t.substr(1);
+        auto tl = t.substr(0, t.length() - 1);
+//        std::cout << "t = '" << t << "', tl = '" << tl << "', tr = '" << tr << "'\n";
+
+        if(markers.find(tl) == markers.end()) {
+          int idx = markers.size();
+          markers[tl] = idx;
+        }
+
+        if(markers.find(tr) == markers.end()) {
+          int idx = markers.size();
+          markers[tr] = idx;
+        }
+
+        items.push_back(std::make_shared<item_t>(std::move(t), markers[tl], markers[tr]));
       }
-      auto tr = t.substr(1);
-      auto tl = t.substr(0, t.length() - 1);
-      std::cout << "t = '" << t << "', tl = '" << tl << "', tr = '" << tr << "'\n";
     }
+    std::cout << string(60,'-') << "\n";
+    const int n = items.front()->s.length() - 1;
+    for(int z = 0; z < 1; ++z) {
+    }
+  }
+
+  item_t::item_t(string &&_s, int lm, int rm) : s(std::move(_s)), left(lm), right(rm) {
   }
 }
