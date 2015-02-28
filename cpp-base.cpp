@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 namespace {
   void test();
@@ -19,9 +20,12 @@ namespace {
   void process(std::string s);
 
   void test() {
-    process("");
-    std::cout << ""    "\n";
-      // std::endl for flush?
+    std::vector<std::string> v_test {};
+    std::vector<std::string> v_expect {};
+    for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
+      process(v_test[i]);
+      std::cout << v_expect[i] << "\n";
+    }
   }
 
   void process_file(char* path) {
@@ -34,5 +38,5 @@ namespace {
   void process(std::string line) {
     std::cout << "s = '" << line << "'\n";
   //    std::istringstream ss { line };
-}
+  }
 }
