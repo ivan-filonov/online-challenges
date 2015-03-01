@@ -2,23 +2,28 @@
 #include <iostream>
 #include <vector>
 
+#define TEST
+
 namespace {
+#ifdef TEST
   void test();
+#endif //#ifdef TEST
   void process_file(char*);
 }
 
 int main(int argc, char ** argv) {
-    if( 1 ) {
-        test();
-    } else {
-        process_file(argv[1]);
-    }
+#ifdef TEST
+  test();
+#else
+  process_file(argv[1]);
+#endif //#ifdef TEST
 	return 0;
 }
 
 namespace {
   void process(std::string s);
 
+#ifdef TEST
   void test() {
     std::vector<std::string> v_test {};
     std::vector<std::string> v_expect {};
@@ -27,6 +32,7 @@ namespace {
       std::cout << v_expect[i] << "\n";
     }
   }
+#endif //#ifdef TEST
 
   void process_file(char* path) {
     std::ifstream stream(path);
