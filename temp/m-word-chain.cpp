@@ -2,8 +2,6 @@
 #include <iostream>
 #include <vector>
 
-#define TEST
-
 namespace {
 #ifdef TEST
   void test();
