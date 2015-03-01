@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -64,15 +65,39 @@ namespace {
   struct worker {
     int n;
     const string initial;
+    map<int,vector<shared_ptr<item_t>>> by_left;
+    map<int,vector<shared_ptr<item_t>>> by_right;
 
     worker(const string& s) : initial(s) {}
   
     void run();
+
+    void add_item(shared_ptr<item_t> &&item);
+    void remove_item(shared_ptr<item_t> item);
     
     void prepare();
+    bool step_simple();
     bool step();
     string result() const;
   };
+
+  void worker::add_item(shared_ptr<item_t> &&item) {
+    by_left[item->left].push_back(item);
+    by_right[item->right].push_back(item);
+  }
+
+  void worker::remove_item(shared_ptr<item_t> item) {
+    auto &lv = by_left[item->left];
+    std::remove(lv.begin(), lv.end(), item);
+    if( lv.empty() ) {
+      by_left.erase(item->left);
+    }
+    auto &rv = by_right[item->right];
+    std::remove(rv.begin(), rv.end(), item);
+    if( rv.empty() ) {
+      by_right.erase(item->right);
+    }
+  }
 
   int map_marker(map<string,int> &m, string &&s) {
     auto it = m.find(s);
@@ -94,14 +119,20 @@ namespace {
       }
       auto tr = t.substr(1);
       auto tl = t.substr(0, n = t.length() - 1);
+
       auto mr = map_marker(markers, std::move(tr));
       auto ml = map_marker(markers, std::move(tl));
-      auto item = std::make_shared<item_t>(std::move(t), ml, mr);
+      
+      add_item(std::make_shared<item_t>(std::move(t), ml, mr));
     }
+  }
+  
+  bool worker::step_simple() {
+    return false;
   }
 
   bool worker::step() {
-    return false;
+    return step_simple();
   }
 
   string worker::result() const {
