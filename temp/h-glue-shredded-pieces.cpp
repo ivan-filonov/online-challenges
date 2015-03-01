@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
+#define VERBOSE
 #define TEST
 
 namespace {
@@ -67,6 +68,7 @@ namespace {
     const string initial;
     map<int,vector<shared_ptr<item_t>>> by_left;
     map<int,vector<shared_ptr<item_t>>> by_right;
+    shared_ptr<item_t> last_glued;
 
     worker(const string& s) : initial(s) {}
   
@@ -74,9 +76,9 @@ namespace {
 
     void add_item(shared_ptr<item_t> &&item);
     void remove_item(shared_ptr<item_t> item);
+    void glue(shared_ptr<item_t> left, shared_ptr<item_t> right);
     
     void prepare();
-    bool step_simple();
     bool step();
     string result() const;
   };
@@ -86,17 +88,28 @@ namespace {
     by_right[item->right].push_back(item);
   }
 
+  void remove_item_from_map(map<int,vector<shared_ptr<item_t>>> &m, shared_ptr<item_t> item, int key) {
+    auto &vec = m[key];
+    vec.erase(std::find(vec.begin(), vec.end(), item));
+    if(vec.empty()) {
+      m.erase(key);
+    }
+  }
+
   void worker::remove_item(shared_ptr<item_t> item) {
-    auto &lv = by_left[item->left];
-    std::remove(lv.begin(), lv.end(), item);
-    if( lv.empty() ) {
-      by_left.erase(item->left);
-    }
-    auto &rv = by_right[item->right];
-    std::remove(rv.begin(), rv.end(), item);
-    if( rv.empty() ) {
-      by_right.erase(item->right);
-    }
+    remove_item_from_map(by_left, item, item->left);
+    remove_item_from_map(by_right, item, item->right);
+  }
+
+  void worker::glue(shared_ptr<item_t> left, shared_ptr<item_t> right) {
+    auto new_item = std::make_shared<item_t>(left->s + right->s.substr(n), left->left, right->right);
+#ifdef VERBOSE
+    std::cout << "new_item: {left=" << new_item->left << ", right=" << new_item->right << ", s='" << new_item->s << "'}\n";
+#endif//#ifdef VERBOSE
+    last_glued = new_item;
+    add_item(std::move(new_item));
+    remove_item(left);
+    remove_item(right);
   }
 
   int map_marker(map<string,int> &m, string &&s) {
@@ -127,21 +140,20 @@ namespace {
     }
   }
   
-  bool worker::step_simple() {
+  bool worker::step() {
     return false;
   }
 
-  bool worker::step() {
-    return step_simple();
-  }
-
   string worker::result() const {
-    return string(initial.length(), '?');
+    return last_glued ? last_glued->s : "<ERROR>";
   }
 
   void worker::run() {
     prepare();
     while(step());
+#ifdef VERBOSE
+    std::cout << "by_left.size() = " << by_left.size() << ", by_right.size() = " << by_right.size() << "\n";
+#endif//#ifdef VERBOSE
     std::cout << result() << "\n";
   }
   
