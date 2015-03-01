@@ -28,6 +28,7 @@ namespace {
   using std::vector;
   using std::shared_ptr;
   template<typename K,typename V> using map = std::unordered_map<K,V>;
+  template<typename K,typename V> using multimap = std::unordered_multimap<K,V>;
 
   void process(string s);
 
@@ -54,50 +55,70 @@ namespace {
   }
 
   struct item_t {
-    string s;
-    int left;
-    int right;
-    item_t(string &&s, int lm, int rm);
+    const string s;
+    const int left;
+    const int right;
+    item_t(string &&_s, int lm, int rm) : s(std::move(_s)), left(lm), right(rm) {}
   };
 
+  struct worker {
+    int n;
+    const string initial;
+
+    worker(const string& s) : initial(s) {}
+  
+    void run();
+    
+    void prepare();
+    bool step();
+    string result() const;
+  };
+
+  int map_marker(map<string,int> &m, string &&s) {
+    auto it = m.find(s);
+    if(m.end() != it) {
+      return it->second;
+    }
+    int res = m.size();
+    m.insert({ std::move(s), res });
+    return res;
+  }
+
+  void worker::prepare() {
+    string t;
+    std::istringstream ss { initial };
+    map<string,int> markers;
+    while(std::getline(ss, t, '|')) {
+      if(t.empty()) {
+        continue;
+      }
+      auto tr = t.substr(1);
+      auto tl = t.substr(0, n = t.length() - 1);
+      auto mr = map_marker(markers, std::move(tr));
+      auto ml = map_marker(markers, std::move(tl));
+      auto item = std::make_shared<item_t>(std::move(t), ml, mr);
+    }
+  }
+
+  bool worker::step() {
+    return false;
+  }
+
+  string worker::result() const {
+    return string(initial.length(), '?');
+  }
+
+  void worker::run() {
+    prepare();
+    while(step());
+    std::cout << result() << "\n";
+  }
+  
   void process(std::string line) {
 #ifdef TEST
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-    
-    vector<shared_ptr<item_t>> items;
-  
-    {
-      std::istringstream ss { line };
-      map<string,int> markers;
-
-      for(string t; std::getline(ss, t, '|'); ) {
-        if(t.empty()) {
-          continue;
-        }
-        auto tr = t.substr(1);
-        auto tl = t.substr(0, t.length() - 1);
-//        std::cout << "t = '" << t << "', tl = '" << tl << "', tr = '" << tr << "'\n";
-
-        if(markers.find(tl) == markers.end()) {
-          int idx = markers.size();
-          markers[tl] = idx;
-        }
-
-        if(markers.find(tr) == markers.end()) {
-          int idx = markers.size();
-          markers[tr] = idx;
-        }
-
-        items.push_back(std::make_shared<item_t>(std::move(t), markers[tl], markers[tr]));
-      }
-    }
-    std::cout << string(60,'-') << "\n";
-    const int n = items.front()->s.length() - 1;
-    for(int z = 0; z < 1; ++z) {
-    }
-  }
-
-  item_t::item_t(string &&_s, int lm, int rm) : s(std::move(_s)), left(lm), right(rm) {
+    worker w { line };
+    w.run();
   }
 }
