@@ -1,5 +1,7 @@
 #include <fstream>
 #include <iostream>
+#include <sstream>
+#include <unordered_map>
 #include <vector>
 
 namespace {
@@ -49,6 +51,21 @@ namespace {
 
   void process(std::string line) {
     std::cout << "s = '" << line << "'\n";
-  //    std::istringstream ss { line };
+    std::istringstream ss { line };
+    std::vector<char> c_l;
+    std::vector<char> c_r;
+    for(std::string t; std::getline(ss, t, ',');) {
+      c_l.push_back(t.front());
+      c_r.push_back(t.back());
+    }
+    
+    std::cout << "c_l.size() = " << c_l.size() << ", c_r.size() = " << c_r.size() << "\n";
+    std::unordered_map<char,std::vector<int>> m_l;
+    std::unordered_map<char,std::vector<int>> m_r;
+    for(int i = 0; i < c_l.size(); ++i) {
+      m_l[c_l[i]].push_back(i);
+      m_r[c_r[i]].push_back(i);
+    }
+    std::cout << "m_l.size() = " << m_l.size() << ", m_r.size() = " << m_r.size() << "\n";
   }
 }
