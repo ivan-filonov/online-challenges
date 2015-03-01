@@ -6,9 +6,6 @@
 #include <unordered_map>
 #include <vector>
 
-#define VERBOSE
-#define TEST
-
 namespace {
 #ifdef TEST
   void test();
@@ -64,11 +61,11 @@ namespace {
   };
 
   struct worker {
-    int n;
-    const string initial;
+    int n;//marker length (segment length - 1)
+    const string initial;//inital string '|' ( segment '|' )+
     map<int,vector<shared_ptr<item_t>>> by_left;
     map<int,vector<shared_ptr<item_t>>> by_right;
-    shared_ptr<item_t> last_glued;
+    shared_ptr<item_t> last_glued;// result if the last call to glue()
 
     worker(const string& s) : initial(s) {}
   
@@ -79,6 +76,9 @@ namespace {
     void glue(shared_ptr<item_t> left, shared_ptr<item_t> right);
     
     void prepare();
+    bool step_unique_pair_by_left();
+    bool step_same_markers();
+    bool step_any_available();
     bool step();
     string result() const;
   };
@@ -103,9 +103,6 @@ namespace {
 
   void worker::glue(shared_ptr<item_t> left, shared_ptr<item_t> right) {
     auto new_item = std::make_shared<item_t>(left->s + right->s.substr(n), left->left, right->right);
-#ifdef VERBOSE
-    std::cout << "new_item: {left=" << new_item->left << ", right=" << new_item->right << ", s='" << new_item->s << "'}\n";
-#endif//#ifdef VERBOSE
     last_glued = new_item;
     add_item(std::move(new_item));
     remove_item(left);
@@ -140,8 +137,48 @@ namespace {
     }
   }
   
-  bool worker::step() {
+  bool worker::step_unique_pair_by_left() {
+    for(auto &brp : by_left) {
+      if(1 == brp.second.size() && by_right.count(brp.first) && 1 == by_left[brp.first].size()) {
+        auto right = brp.second.front();
+        auto left = by_right[right->left].front();
+        glue(left, right);
+        return true;
+      }
+    }
     return false;
+  }
+
+  bool worker::step_same_markers() {
+    for(auto &right_parts_vec : by_left) {
+      for(auto &right_part: right_parts_vec.second) {
+        if(right_part->left == right_part->right && by_right.count(right_part->left)) {
+          for(auto &left_part : by_right[right_part->left]) {
+            if(right_part != left_part) {
+              glue(left_part, right_part);
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  bool worker::step_any_available() {
+    for(auto &right_parts_vec : by_left) {
+      for(auto &right_part : right_parts_vec.second) {
+        if(by_right.count(right_part->left)) {
+          glue(by_right[right_part->left].front(), right_part);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  bool worker::step() {
+    return step_unique_pair_by_left() || step_same_markers() || step_any_available();
   }
 
   string worker::result() const {
@@ -149,18 +186,11 @@ namespace {
   }
 
   void worker::run() {
-    prepare();
-    while(step());
-#ifdef VERBOSE
-    std::cout << "by_left.size() = " << by_left.size() << ", by_right.size() = " << by_right.size() << "\n";
-#endif//#ifdef VERBOSE
+    for(prepare();step(););
     std::cout << result() << "\n";
   }
   
   void process(std::string line) {
-#ifdef TEST
-    std::cout << "s = '" << line << "'\n";
-#endif //#ifdef TEST
     worker w { line };
     w.run();
   }
