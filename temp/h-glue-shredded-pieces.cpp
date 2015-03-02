@@ -52,8 +52,45 @@ namespace {
   using string_t = std::string;
   template<typename _v> using vector_t = std::vector<_v>;
 
-  size_t split_input_string(const string_t & line, vector_t<string_t> & v) {
-    size_t n = 0;
+  struct rec_t {
+    string_t value;
+    string_t left;
+    string_t right;
+    static size_t n;
+
+    rec_t() {}
+
+    rec_t(const string_t& s) : value { s } {
+      left = s.substr(0, n - 1);
+      right = s.substr(s.length() - (n - 1));
+    }
+
+    rec_t& operator = (rec_t && other) {
+      value = std::move(other.value);
+      left = std::move(other.left);
+      right = std::move(other.right);
+      return *this;
+    }
+
+    rec_t(rec_t&& other) : value { std::move(other.value) }, left { std::move(other.left) }, right { std::move(other.right) } {}
+
+    rec_t operator + (const rec_t& other) {
+      rec_t res;
+      res.left = left;
+      res.right = other.right;
+      res.value = value + other.value.substr(n - 1);
+      return res;
+    }
+
+    bool can_glue(const rec_t& other) const {
+      return right == other.left;
+    }
+  };
+
+  size_t rec_t::n = 0;
+  
+  size_t split_input_string(const string_t & line, vector_t<rec_t> & v) {
+    size_t & n = rec_t::n;
     std::istringstream ss { line };
     for(std::string t; std::getline(ss, t, '|');) {
       if(!t.empty()) {
@@ -63,66 +100,41 @@ namespace {
           std::cout << "bad length: '" << t << "'\n";
           throw n;
         }
-        v.push_back(t);
+        v.emplace_back(t);
       }
     }
     return n;
   }
 
-  bool can_glue(const string_t& s1, const string_t& s2, const size_t n) {
-    bool equal = true;
-    for(auto it1 = s2.begin(), it2 = (s2.begin() + (n-1)), it3 = s1.begin() + (s1.length() - (n-1)); it1 != it2 && equal; ++it1, ++it3) {
-      equal &= (*it1 == *it3);
-    }
-    return equal;
-  }
+  void process(std::string line) {
+    vector_t<rec_t> v;
+    split_input_string(line, v);
+    auto & n = rec_t::n;
 
-  void glue_step(vector_t<string_t> & v, const size_t n) {
-    size_t i, j;
-    vector_t<int> cv;
-    
-    for(i = 0; i < v.size(); ++i) {
-      cv.clear();
-      auto & vi = v[i];
-      if(vi.empty()) {
-        continue;
-      }
-      for(j = 0; j < v.size(); ++j) {
-        if(i != j) {
-          // compare last n-1 chars of v[i] with the beginning of v[j]
-          auto & vj = v[j];
-          if(vj.empty()) {
-            continue;
+    while(v.size() > 1) {
+      size_t i,j;
+      vector_t<size_t> cv;
+      for(i = 0; i < v.size(); ++i) {
+        auto & vi = v[i];
+        cv.clear();
+        for(j = 0; j < v.size(); ++j) {
+          if(i != j) {
+            auto & vj = v[j];
+            if(vi.can_glue(vj)) {
+              cv.push_back(j);
+            }
           }
-          if(can_glue(vi, vj, n)) {
-            cv.push_back(j);
-          }
-        } else {
-          continue;
+        }
+        if(cv.size() == 1) {
+          break;
         }
       }
-      if(1 == cv.size()) {
-        break;
+      if(cv.size() == 1) {
+        j = cv.front();
+        v[i] = v[i] + v[j];
+        v.erase(v.begin() + j);
       }
     }
-    if(1 == cv.size()) {
-      j = cv.front();
-      auto ns = v[i] + v[j].substr(n - 1);
-
-      v[i] = ns;
-      v.erase(v.begin() + j);
-    }
-  }
-
-  void process(std::string line) {
-    vector_t<string_t> v;
-    auto n = split_input_string(line, v);
-    while(v.size() > 1) {
-      glue_step(v, n);
-    }
-    for(auto & s : v) {
-      std::cout << s;
-    }
-    std::cout << "\n";
+    std::cout << v.front().value << "\n";
   }
 }
