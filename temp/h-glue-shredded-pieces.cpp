@@ -1,3 +1,4 @@
+//#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -51,11 +52,9 @@ namespace {
   using string_t = std::string;
   template<typename _v> using vector_t = std::vector<_v>;
 
-  void process(std::string line) {
-    std::istringstream ss { line };
+  size_t split_input_string(const string_t & line, vector_t<string_t> & v) {
     size_t n = 0;
-    int i = 1;
-    vector_t<string_t> v;
+    std::istringstream ss { line };
     for(std::string t; std::getline(ss, t, '|');) {
       if(!t.empty()) {
         if(!n) {
@@ -67,32 +66,63 @@ namespace {
         v.push_back(t);
       }
     }
-    while(v.size() > 1) {
-      vector_t<int> cv;
-      int i;
-      int j;
-      for(i = 0; i < v.size(); ++i) {
-        cv.clear();
-        for(j = 0; j < v.size(); ++j) {
-          if(j == i) {
+    return n;
+  }
+
+  bool can_glue(const string_t& s1, const string_t& s2, const size_t n) {
+    bool equal = true;
+    for(auto it1 = s2.begin(), it2 = (s2.begin() + (n-1)), it3 = s1.begin() + (s1.length() - (n-1)); it1 != it2 && equal; ++it1, ++it3) {
+      equal &= (*it1 == *it3);
+    }
+    return equal;
+  }
+
+  void glue_step(vector_t<string_t> & v, const size_t n) {
+    size_t i, j;
+    vector_t<int> cv;
+    
+    for(i = 0; i < v.size(); ++i) {
+      cv.clear();
+      auto & vi = v[i];
+      if(vi.empty()) {
+        continue;
+      }
+      for(j = 0; j < v.size(); ++j) {
+        if(i != j) {
+          // compare last n-1 chars of v[i] with the beginning of v[j]
+          auto & vj = v[j];
+          if(vj.empty()) {
             continue;
           }
-          const auto& vi = v[i];
-          const auto& vj = v[j];
-          const auto ir = vi.substr(vi.length() - n + 1);
-          const auto jl = vj.substr(0, n - 1);
-          if(ir == jl) {
+          if(can_glue(vi, vj, n)) {
             cv.push_back(j);
           }
-        }
-        if(1 == cv.size()) {
-          break;
+        } else {
+          continue;
         }
       }
+      if(1 == cv.size()) {
+        break;
+      }
+    }
+    if(1 == cv.size()) {
       j = cv.front();
-      v[i] += v[j].substr(n - 1);
+      auto ns = v[i] + v[j].substr(n - 1);
+
+      v[i] = ns;
       v.erase(v.begin() + j);
     }
-    std::cout << v.front() << "\n";
+  }
+
+  void process(std::string line) {
+    vector_t<string_t> v;
+    auto n = split_input_string(line, v);
+    while(v.size() > 1) {
+      glue_step(v, n);
+    }
+    for(auto & s : v) {
+      std::cout << s;
+    }
+    std::cout << "\n";
   }
 }
