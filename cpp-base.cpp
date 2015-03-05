@@ -46,7 +46,9 @@ namespace {
   }
 
   void process(std::string line) {
+#ifdef TEST
     std::cout << "s = '" << line << "'\n";
+#endif //#ifdef TEST
   //    std::istringstream ss { line };
   }
 }
