@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #define TEST
@@ -22,6 +24,14 @@ int main(int argc, char ** argv) {
 
 namespace {
   void process(std::string s);
+
+  struct worker {
+    std::string initial;
+    std::vector<std::string> parts;
+
+    worker(const std::string &s);
+    std::string run();
+  };
 
 #ifdef TEST
   void test() {
@@ -49,6 +59,19 @@ namespace {
 #ifdef TEST
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-  //    std::istringstream ss { line };
+    std::cout << worker { line }.run() << "\n";
+  }
+
+  worker::worker(const std::string &s) : initial(s) {
+    std::istringstream ss { s };
+    for(std::string t; std::getline(ss, t, '|');) {
+      if(!t.empty()) {
+        parts.push_back(t);
+      }
+    }
+  }
+
+  std::string worker::run() {
+    return parts.front();
   }
 }
