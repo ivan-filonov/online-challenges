@@ -26,10 +26,14 @@ namespace {
 #ifdef TEST
   void test() {
     std::vector<std::string> v_test {
-
+2
+4
+5
     };
     std::vector<std::string> v_expect {
-
+1
+2
+0
     };
     for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
       process(v_test[i]);
