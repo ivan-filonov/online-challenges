@@ -1,10 +1,10 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <unordered_map>
 #include <vector>
-
-#define TEST
 
 namespace {
 #ifdef TEST
@@ -49,21 +49,59 @@ namespace {
     }
   }
 
-  using std::shared_ptr;
-  using std::string;
-  using std::vector;
-
-  shared_ptr<string> share(string && s) {
-    return std::make_shared<string>(std::move(s));
-  }
-
   void process(std::string line) {
 #ifdef TEST
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-      std::istringstream ss { line };
-      for(std::string t; std::getline(ss, t, ';');) {
-        std::cout << t << "\n";
+    std::vector<std::string> parts;
+    
+    int ms = 0;
+    std::istringstream ss { line };
+    for(std::string t; std::getline(ss, t, ';');) {
+      ms = std::max(ms, (int)t.length());
+      parts.emplace_back(std::move(t));
+    }
+
+    --ms;
+    while(ms && parts.size() > 1){
+      std::unordered_map<std::string,int> right;
+      for(int i = 0; i < parts.size(); ++i) {
+        auto &s = parts[i];
+        if(s.length() <= ms) {
+          continue;
+        }
+        right[s.substr(s.length() - ms)] = i;
       }
+      if(right.size() < 2) {
+        --ms;
+        continue;
+      }
+      int vl = -1, vr = -1;
+      for(int i = 0; i < parts.size(); ++i) {
+        auto &s = parts[i];
+        if(s.length() <= ms) {
+          continue;
+        }
+        auto it = right.find(s.substr(0, ms));
+        if(right.end() == it) {
+          continue;
+        }
+        if(i == it->second) {
+          continue;
+        }
+        vr = i;
+        vl = it->second;
+        break;
+      }
+      if(vl < 0) {
+        --ms;
+        continue;
+      }
+      parts.push_back(parts[vl] + parts[vr].substr(ms));
+      parts.erase(parts.begin() + std::max(vl, vr));
+      parts.erase(parts.begin() + std::min(vl, vr));
+    }
+    std::sort(parts.begin(), parts.end(), [](const std::string &s1, const std::string &s2){ return s2.length() < s1.length(); });
+    std::cout << parts.front() << "\n";
   }
 }
