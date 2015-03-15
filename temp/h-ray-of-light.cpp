@@ -141,7 +141,7 @@ namespace {
 
     // 3. trace it
     if( vdx.front() * vdy.front() ) {
-      active.push_back(21);//< activate the first light
+      active.push_back(20);//< activate the first light
 #ifdef VERBOSE_TEST
       int dist = 0;
 #endif//#ifdef VERBOSE_TEST
@@ -156,7 +156,7 @@ namespace {
             continue;
           }
           if( '*' != line[10 * y + x]) {
-            --active[ray];
+            active[ray]--;
           } else {
             int nx, ny, ndx, ndy, na = active[ray];
             std::tie(nx, ny, ndx, ndy) = std::make_tuple( x + dx, y - dy, dx, -dy );
