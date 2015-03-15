@@ -141,7 +141,7 @@ namespace {
 
     // 3. trace it
     if( vdx.front() * vdy.front() ) {
-      active.push_back(20);//< activate the first light
+      active.push_back(21);//< activate the first light
 #ifdef VERBOSE_TEST
       int dist = 0;
 #endif//#ifdef VERBOSE_TEST
@@ -152,11 +152,12 @@ namespace {
         for(int ray = 0, rmax = vx.size(); ray != rmax; ++ray) {
           int x = vx[ray], y = vy[ray], dx = vdx[ray], dy = vdy[ray];
           mark(x, y, dx, dy);
-          if(!active[ray]--) {
+          if(!active[ray]) {
             continue;
           }
-          if( '*' == line[10 * y + x]) {
-            active[ray]++;
+          if( '*' != line[10 * y + x]) {
+            --active[ray];
+          } else {
             int nx, ny, ndx, ndy, na = active[ray];
             std::tie(nx, ny, ndx, ndy) = std::make_tuple( x + dx, y - dy, dx, -dy );
             char nc = line[10 * ny + nx];
