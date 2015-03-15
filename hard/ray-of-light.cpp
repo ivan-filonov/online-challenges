@@ -151,30 +151,31 @@ namespace {
 #endif//#ifdef VERBOSE_TEST
         for(int ray = 0, rmax = vx.size(); ray != rmax; ++ray) {
           int x = vx[ray], y = vy[ray], dx = vdx[ray], dy = vdy[ray];
-          mark(x, y, dx, dy);
+          if(x < 0 || x > 9 || y < 0 || y > 9) {
+            active[ray] = 0;
+          }
           if(!active[ray]) {
             continue;
           }
+          mark(x, y, dx, dy);
           if( '*' != line[10 * y + x]) {
             active[ray]--;
           } else {
-            int nx, ny, ndx, ndy, na = active[ray];
-            std::tie(nx, ny, ndx, ndy) = std::make_tuple( x + dx, y - dy, dx, -dy );
-            char nc = line[10 * ny + nx];
+            int na = active[ray];
+            char nc = line[10 * y + x + dx - 10 * dy];
             if('#' != nc && 'o' != nc) {
-              vx.push_back(nx);
-              vdx.push_back(ndx);
-              vy.push_back(ny);
-              vdy.push_back(ndy);
+              vx.push_back(x + dx);
+              vdx.push_back(dx);
+              vy.push_back(y - dy);
+              vdy.push_back(-dy);
               active.push_back(na);
             }
-            std::tie(nx, ny, ndx, ndy) = std::make_tuple( x - dx, y + dy, -dx, dy );
-            nc = line[10 * ny + nx];
+            nc = line[10 * y + x - dx + 10 * dy];
             if('#' != nc && 'o' != nc) {
-              vx.push_back(nx);
-              vdx.push_back(ndx);
-              vy.push_back(ny);
-              vdy.push_back(ndy);
+              vx.push_back(x - dx);
+              vdx.push_back(-dx);
+              vy.push_back(y + dy);
+              vdy.push_back(dy);
               active.push_back(na);
             }
           }
