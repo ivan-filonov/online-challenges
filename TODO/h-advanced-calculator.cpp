@@ -83,6 +83,86 @@ If output number has less than 5 digits after the dot you don't need to add zero
 E.g. you need to print 16.34 (and not 16.34000) in case the answer is 16.34.
 And you need to print 16 (and not 16.00000) in case the answer is 16. 
  * */
+#if 0
+typedef std::vector<std::string>::iterator _iter_t;
+typedef long double num_t;
+
+num_t expr(_iter_t& it, const _iter_t end);
+num_t expr1(_iter_t& it, const _iter_t end);
+num_t expr2(_iter_t& it, const _iter_t end);
+num_t expr3(_iter_t& it, const _iter_t end);
+num_t expr4(_iter_t& it, const _iter_t end);
+
+num_t expr(_iter_t& it, const _iter_t end) {
+  num_t l = expr1(it, end);
+  while(end != it) {
+    const auto add = *it == "+";
+    const auto sub = *it == "-";
+    if(add || sub) {
+      ++it;
+      auto r = expr1(it, end);
+      l = add ? (l + r) : (l - r);
+    } else {
+      break;
+    }
+  }
+  return l;
+}
+
+num_t expr1(_iter_t& it, const _iter_t end) {
+  num_t l = expr2(it, end);
+  while(end != it) {
+    const auto mul = *it == "*";
+    const auto div = *it == "/";
+    if(mul || div) {
+      ++it;
+      auto r = expr2(it, end);
+      l = mul ? (l * r) : (l / r);
+    } else {
+      break;
+    }
+  }
+  return l;
+}
+
+num_t expr2(_iter_t& it, const _iter_t end) {
+  num_t l = expr3(it, end);
+  while(end != it) {
+    if(*it == "^") {
+      ++it;
+      l = std::pow(l, expr3(it, end));
+    } else {
+      break;
+    }
+  }
+  return l;
+}
+
+num_t expr3(_iter_t& it, const _iter_t end) {
+    if(*it == "-") {
+      ++it;
+      return -expr4(it, end);
+    }
+  return expr4(it, end);
+}
+
+num_t expr4(_iter_t& it, const _iter_t end) {
+  auto c = (*it)[0];
+  if(std::isdigit(c) || ('.' == c)) {
+    auto s = *it++;
+    return std::stod(s);
+  } else if(*it == "(") {
+    ++it;
+    auto r = expr(it, end);
+    if(*it == ")") {
+      ++it;
+    } else {
+      throw *it;
+    }
+    return r;
+  }
+}
+#endif//#if 0
 
   void process(std::string line) {
 #ifdef TEST
