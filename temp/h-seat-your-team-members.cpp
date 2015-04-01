@@ -1,5 +1,6 @@
 #include <fstream>
 #include <iostream>
+#include <tuple>
 #include <vector>
 
 namespace {
@@ -46,106 +47,76 @@ namespace {
   }
 
   struct state {
-    int N;
-    std::vector<std::vector<int>> v;
+    const std::string s;
+    size_t pos;
 
-    void setN (int);
-    void setUid(int);
-    void addPlace(int);
-
-    bool run();
-  };
-
-  void parse_state(const std::string &line, state &st) {
-    size_t pos = 0;
-    st.setN(std::stoi(line, &pos));
-
-    while(pos < line.length() && !std::isdigit(line[pos])) {
-      ++pos;
-    }
-
-    for(;pos < line.length();) {
-      int uid = 0;
-      while(std::isdigit(line[pos])) {
-        uid = uid * 10 + (line[pos] - '0');
+    state(const std::string &s_) : s(s_), pos(0) {}
+    
+    int p_int() {
+      int r = 0;
+      while(pos < s.length() && std::isdigit(s[pos])) {
+        r = r * 10 + (s[pos] - '0');
         ++pos;
       }
-      if(line[pos++] != ':') {
-        throw std::exception();
-      }
-      if(line[pos++] != '[') {
-        throw std::exception();
-      }
-      st.setUid(uid);
-
-      for(;line[pos] != ']';) {
-        int placeid = 0;
-        for(; std::isdigit(line[pos]); ++pos) {
-          placeid = placeid * 10 + (line[pos] - '0');
-        }
-        st.addPlace(placeid);
-        if(',' == line[pos]) {
-          while(' ' == line[++pos]);
-        }
-      }
-      ++pos;
-      if(pos + 2 >= line.length()) {
-        break;
-      }
-      if(line[pos] != ',') {
-        throw std::exception();
-      }
-      while(line[++pos] == ' ');
+      return r;
     }
-  }
+
+    void p_expect(const char c) {
+      if(pos < s.length() && c == s[pos]) {
+        ++pos;
+      } else {
+        throw std::exception();
+      }
+    }
+
+    bool p_skip(const char c) {
+      if(pos < s.length() && c == s[pos]) {
+        ++pos;
+        return true;
+      }
+      return false;
+    }
+
+    void parse() {
+      setN( p_int() );
+      p_expect(';');
+      p_expect(' ');
+      for(;;) {
+        addUid( p_int() );
+        p_expect(':');
+        p_expect('[');
+        while(std::isdigit(s[pos])) {
+          addSid( p_int() );
+          if(p_skip(',')) {
+            p_expect(' ');
+          }
+        }
+        p_expect(']');
+        if(p_skip(',')) {
+          p_expect(' ');
+        } else {
+          break;
+        }
+      }
+    }
+
+    void setN(int n) {}
+    void addUid(int uid) {}
+    void addSid(int sid) {}
+
+    bool run() {
+      parse();
+      return false;
+    }
+  };
 
   void process(std::string line) {
 #ifdef TEST
     // N; Uid:[Seats ','] ','
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-    
-    state st;
-    parse_state(line, st);
+
+    state st(line);
     std::cout << (st.run() ? "Yes\n" : "No\n");
-  }
-
-  void state::addPlace(int placeid) {
-    v.back().push_back(placeid);
-  }
-
-  void state::setN(int N_) {
-    N = N_;
-  }
-
-  void state::setUid(int uid) {
-    v.emplace_back();
-  }
-
-  bool state::run() {
-    uint64_t c = 1;
-    for(const auto &vv : v) {
-      c *= vv.size();
-    }
-    if(c > 10000000000ull) {
-        throw std::exception();
-    }
-
-    bool fail = true;
-    for(uint64_t i = 0; i != c && fail; ++i) {
-      auto ii = i;
-      uint64_t mask = 0;
-      fail = false;
-      for(const auto &vv : v) {
-        auto seat = 1ull << vv[ii % vv.size()];
-        ii /= vv.size();
-        if(mask & seat) {
-          fail = true;
-          break;
-        }
-        mask |= seat;
-      }
-    }
-    return !fail;
   }
 }
