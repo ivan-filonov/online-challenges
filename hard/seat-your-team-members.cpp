@@ -1,3 +1,5 @@
+//#include <algorithm>
+#include <bitset>
 #include <fstream>
 #include <iostream>
 #include <tuple>
@@ -99,14 +101,59 @@ namespace {
         }
       }
     }
+    
+    struct entity {
+      int uid;
+      std::bitset<64> mask;
 
-    void setN(int n) {}
-    void addUid(int uid) {}
-    void addSid(int sid) {}
+      entity() {
+      }
+    };
 
+    std::vector<entity> v;
+    
+    void setN(int n) {
+      v.clear();
+      v.reserve(n);
+    }
+
+    void addUid(int uid_) {
+      v.emplace_back();
+      v.back().uid = uid_;
+    }
+
+    void addSid(int sid) {
+      v.back().mask.set(sid - 1, true);
+    }
+
+    void pre_sort_entities() {
+      for(size_t i = 0, imax = v.size() - 1, jmax = v.size(); i != imax; ++i) {
+        for(size_t j = i + 1; j != jmax; ++j) {
+          if(v[j].mask.count() < v[i].mask.count()) {
+            std::swap(v[i], v[j]);
+          }
+        }
+      }
+//      std::sort(v.begin(), v.end(), [](const entity &e1, const entity &e2) { return e1.mask.count() < e2.mask.count(); });
+    }
+    
     bool run() {
       parse();
-      return false;
+      pre_sort_entities();
+      for(uint64_t t = 3, lim = 1ull << v.size(); t != lim; ++t) {
+        if(!(t&(t-1))) {
+          continue;
+        }
+        std::bitset<64> m;
+        for(size_t o = 0; o < v.size(); ++o) {
+          m |= (t & (1ull << o)) ? v[o].mask : 0;
+        }
+        std::bitset<64> u { t };
+        if(m.count() < u.count()) {
+          return false;
+        }
+      }
+      return true;
     }
   };
 
