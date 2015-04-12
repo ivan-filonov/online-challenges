@@ -53,20 +53,30 @@ namespace {
     auto A = std::stoi(line, &sep);
     auto B = std::stoi(line.substr(sep));
     bool mid = false;
+    char s[16];
+    int slength = 0;
     for(auto n = A; n <= B; ++n) {
-      auto s = std::to_string(n);
+      slength = 0;
+      for(int i = n; i; i /= 10) {
+        s[slength++] = (i % 10) + '0';
+      }
+      s[slength] = 0;
+      for(int i = 0, j = slength - 1; i < j; ++i, --j) {
+        std::swap(s[i], s[j]);
+      }
       int mask = 0;
       int pos = 0;
-      for(int i = 0; i < s.length(); ++i) {
+      for(int i = 0; i < slength; ++i) {
         pos += s[pos] - '0';
-        pos %= s.length();
+        pos %= slength;
         mask |= 1 << pos;
       }
       ++mask;
-      if(mask == (1 << s.length())) {
+      if(mask == (1 << slength)) {
         bool dups = false;
         int mask2 = 0;
-        for(auto c : s) {
+        for(int i = 0; i < slength; ++i) {
+          auto c = s[i];
           int b = 1 << (c - '0');
           if(mask2 & b) {
             dups = true;
