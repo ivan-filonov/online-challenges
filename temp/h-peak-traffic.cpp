@@ -1,8 +1,7 @@
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 #include <vector>
-
-#define TEST
 
 namespace {
 #ifdef TEST
@@ -22,7 +21,11 @@ int main(int argc, char ** argv) {
 
 namespace {
   struct state {
-    void add(const std::string &line) {
+    using string = std::string;
+    template<typename K, typename V> using map = std::unordered_map<K,V>;
+    template<typename V> using vector = std::vector<V>;
+
+    void add(const string &line) {
 #ifdef TEST
       std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
@@ -31,8 +34,14 @@ namespace {
       const auto tab2 = line.find('\t', tab1 + 1);
       auto u1 = line.substr(tab1 + 1, tab2 - tab1 - 1);
       auto u2 = line.substr(tab2 + 1);
-      std::cout << "u1 = '" << u1 << "', u2 = '" << u2 << "'\n";
+      add(std::move(u1), std::move(u2));
     }
+
+    map<string,map<string,int>> rels;
+    void add(string &&u1, string &&u2) {
+      rels[u1][u2] = 1;
+    }
+    
     void run() {
     }
   };
