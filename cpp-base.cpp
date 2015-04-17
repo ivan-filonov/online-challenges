@@ -2,14 +2,10 @@
 #include <iostream>
 #include <vector>
 
-#define TEST
-
-namespace {
 #ifdef TEST
-  void test();
+void test();
 #endif //#ifdef TEST
-  void process_file(char*);
-}
+void process_file(char*);
 
 int main(int argc, char ** argv) {
 #ifdef TEST
@@ -20,36 +16,34 @@ int main(int argc, char ** argv) {
 	return 0;
 }
 
-namespace {
-  using std::string;
-  template<typename V> using vector = std::vector<V>;
+using std::string;
+template<typename V> using vector = std::vector<V>;
 
-  void process(string line) {
+void process(string line) {
 #ifdef TEST
-    std::cout << "s = '" << line << "'\n";
+  std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-  //    std::istringstream ss { line };
-  }
+//    std::istringstream ss { line };
+}
 
 #ifdef TEST
-  void test() {
-    vector<string> v_test {
+void test() {
+  vector<string> v_test {
 
-    };
-    vector<string> v_expect {
+  };
+  vector<string> v_expect {
 
-    };
-    for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
-      process(v_test[i]);
-      std::cout << v_expect[i] << "\n";
-    }
+  };
+  for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
+    process(v_test[i]);
+    std::cout << v_expect[i] << "\n";
   }
+}
 #endif //#ifdef TEST
 
-  void process_file(char* path) {
-    std::ifstream stream(path);
-    for(string line; std::getline(stream, line); ) {
-      process(line);
-    }
+void process_file(char* path) {
+  std::ifstream stream(path);
+  for(string line; std::getline(stream, line); ) {
+    process(line);
   }
 }
