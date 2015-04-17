@@ -21,7 +21,10 @@ int main(int argc, char ** argv) {
 }
 
 namespace {
-  void process(std::string line) {
+  using std::string;
+  template<typename V> using vector = std::vector<V>;
+
+  void process(string line) {
 #ifdef TEST
     std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
@@ -30,10 +33,10 @@ namespace {
 
 #ifdef TEST
   void test() {
-    std::vector<std::string> v_test {
+    vector<string> v_test {
 
     };
-    std::vector<std::string> v_expect {
+    vector<string> v_expect {
 
     };
     for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
@@ -45,7 +48,7 @@ namespace {
 
   void process_file(char* path) {
     std::ifstream stream(path);
-    for(std::string line; std::getline(stream, line); ) {
+    for(string line; std::getline(stream, line); ) {
       process(line);
     }
   }
