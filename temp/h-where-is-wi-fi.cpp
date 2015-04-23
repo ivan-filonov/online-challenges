@@ -1,6 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <cmath>
+#include <set>
 #include <sstream>
 #include <vector>
 
@@ -27,6 +28,75 @@ struct building {
   string name;
   vector<double> x;
   vector<double> y;
+
+  bool hit_test(double hx, double hy) {
+    using std::abs;
+    using std::min;
+    using std::max;
+    using std::swap;
+    auto minx = x[0];
+    auto maxx = x[0];
+    auto miny = y[0];
+    auto maxy = y[0];
+    for(auto &_x : x) {
+      minx = min(minx, _x);
+      maxx = max(maxx, _x);
+    }
+    for(auto &_y : y) {
+      miny = min(miny, _y);
+      maxy = max(maxy, _y);
+    }
+    if(hx < minx || hx > maxx || hy < miny || hy > maxy) {
+      return false;
+    }
+    double ex[2];
+    double ey[2];
+    int num_right = 0;
+    for(size_t ei = 0; ei != x.size(); ++ei) {
+      ex[0] = x[ei];
+      ey[0] = y[ei];
+      ex[1] = x[(ei + 1) % x.size()];
+      ey[1] = y[(ei + 1) % y.size()];
+      if(hx < min(ex[0], ex[1]) || hx > max(ex[0], ex[1]) || hy < min(ey[0], ey[1]) || hy > max(ey[0], ey[1])) {
+        continue;
+      }
+      ex[1] -= ex[0];
+      ey[1] -= ey[0];
+      auto vx = hx - ex[0];
+      auto vy = hy - ey[0];
+
+      {
+        // 1. hit test line
+        auto lhex = ex[1];
+        auto lhey = ey[1];
+        auto lhvx = vx;
+        auto lhvy = vy;
+        if(abs(lhex) < abs(lhey)) {
+          swap(lhex, lhey);
+          swap(lhvx, lhvy);
+        }
+        auto lhk = lhvx / lhex;
+        if(abs(lhvy - lhk * lhey) < 1e-6) {
+          // point is exaclty on building border
+          return true;
+        }
+      }
+      // 2. is point left or right from the line
+      if(abs(ey[1]) < 1e-6) {
+        // horizontal edge
+        if(abs(ey[0] - hy) < 1e-6 && hx > ex[0]) {
+          ++num_right;
+        }
+      } else {
+        // non-horizontal edge
+        auto tx = vy / ey[1] * ex[1];
+        if(tx > vx) {
+          ++num_right;
+        }
+      }
+    }
+    return num_right % 2 > 0;
+  }
 };
 
 vector<building> vb;
@@ -100,11 +170,11 @@ void process(string line) {
 void print_results() {
   using std::sin;
   using std::cos;
+  std::set<string> res;
   for(auto & s : vs) {
     if(s.x.size() < 2) {
       continue;
     }
-    std::cout << "MAC = '" << s.MAC << "', detects: " << s.x.size() << "\n";
     double c = 0;
     double ax = 0;
     double ay = 0;
@@ -133,9 +203,15 @@ void print_results() {
     }
     ax /= c;
     ay /= c;
-    std::cout << "X = " << ax << ", Y = " << ay << "\n";
-    // now find building
-    ;
+    // now find building at (ax,ay)
+    for(auto & b : vb) {
+      if(b.hit_test(ax, ay)) {
+        res.insert(b.name);
+      }
+    }
+  }
+  for(auto & s : res) {
+    std::cout << s << "\n";
   }
 }
 
@@ -174,4 +250,5 @@ void process_file(char* path) {
   for(string line; std::getline(stream, line); ) {
     process(line);
   }
+  print_results();
 }
