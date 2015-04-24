@@ -244,9 +244,18 @@ void process(string line) {
   }
   pos = 0;
   auto t = expr(vt, &pos);
-  const auto C = 100000.0L;
-  t = std::roundl(t * C) / C;
-  std::cout << t << "\n";
+  vector<char> buf(512);
+  snprintf(buf.data(), buf.size(), "%.5Lf", t);
+  string ts { buf.data() };
+  if(string::npos != ts.find('.')) {
+    while(ts.back() == '0') {
+      ts.pop_back();
+    }
+    if('.' == ts.back()) {
+      ts.pop_back();
+    }
+  }
+  std::cout << ts << "\n";
 }
 
 //#define VERBOSE
