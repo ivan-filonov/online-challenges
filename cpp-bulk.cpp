@@ -38,6 +38,7 @@ void test() {
     add_line(t);
   }
   run();
+  for(int i = 0; i < 80; ++i)std::cout<<'-';std::cout<<"\n";
   vector<string> v_expect {
 
   };
