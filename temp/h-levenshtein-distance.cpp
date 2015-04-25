@@ -24,8 +24,18 @@ using std::move;
 using std::swap;
 
 vector<string> seed_words;
-vector<string> words;
-vector<int> wstats;
+
+struct word_t {
+  string s;
+  int b;
+
+  word_t(string && _s) : s(_s), b(0) {}
+  bool operator < (const word_t & other) const {
+    return s.length() < other.s.length();
+  }
+};
+
+vector<word_t> words;
 
 const string SEED_END { "END OF INPUT" };
 bool reading_seeds = true;
@@ -41,7 +51,6 @@ void add_line(string line) {
     }
   } else {
     words.emplace_back(move(line));
-    wstats.push_back(0);
   }
 }
 
