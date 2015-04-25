@@ -55,6 +55,10 @@ void add_line(string line) {
 }
 
 void run() {
+  std::sort(words.begin(), words.end());
+  for(auto & w : words) {
+    std::cout << "'" << w.s << "'\n";
+  }
   for(auto & sw : seed_words) {
     std::cout << "1\n";
   }
