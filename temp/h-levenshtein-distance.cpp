@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <vector>
@@ -23,6 +24,8 @@ using std::move;
 using std::swap;
 
 vector<string> seed_words;
+vector<string> words;
+vector<int> wstats;
 
 const string SEED_END { "END OF INPUT" };
 bool reading_seeds = true;
@@ -37,6 +40,8 @@ void add_line(string line) {
       reading_seeds = false;
     }
   } else {
+    words.emplace_back(move(line));
+    wstats.push_back(0);
   }
 }
 
