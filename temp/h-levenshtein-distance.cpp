@@ -59,7 +59,37 @@ void run() {
   int wbit = 1;
   for(auto & sw : seed_words) {
     vector<string> nw { sw };
-
+    while(!nw.empty()) {
+      auto cw = move(nw.back());
+      nw.pop_back();
+      
+      auto cl = cw.length();
+      size_t pos = 0;
+      while(pos != words.size() && words[pos].s.length() < cl - 1) {
+        ++pos;
+      }
+      if(words.size() == pos) {
+        continue;
+      }
+      for(;pos != words.size() && words[pos].s.length() == cl - 1; ++pos) {
+        auto & w = words[pos];
+        if(w.b & wbit) {
+          continue;
+        }
+      }
+      for(;pos != words.size() && words[pos].s.length() == cl; ++pos) {
+        auto & w = words[pos];
+        if(w.b & wbit) {
+          continue;
+        }
+      }
+      for(;pos != words.size() && words[pos].s.length() == cl + 1; ++pos) {
+        auto & w = words[pos];
+        if(w.b & wbit) {
+          continue;
+        }
+      }
+    }
     wbit <<= 1;
   }
 }
