@@ -55,7 +55,40 @@ void add_line(string line) {
 }
 
 bool friendz(const string & s1, const string & s2) {
-  return false;
+  size_t i1 = 0;
+  size_t i2 = 0;
+  size_t e1 = s1.size();
+  size_t e2 = s2.size();
+  if(e1 == e2) {
+    int c = 0;
+    while(i1 != e1) {
+      if(s1[i1] != s2[i1]) {
+        ++c;
+        if(c > 1) {
+          break;
+        }
+      }
+    }
+    return c < 2;
+  }
+  if(e1 - e2 != 1 && e2 - e1 != 1) {
+    return false;
+  }
+  while(i1 != e1 && i2 != e2 && s1[i1] == s2[i2]) {
+    ++i1;
+    ++i2;
+  }
+  if(e1 < e2) {
+    ++i2;
+  } else {
+    ++i1;
+  }
+  while(i1 != e1 && i2 != e2) {
+    if(s1[i1] != s2[i2]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void run() {
