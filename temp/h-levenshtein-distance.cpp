@@ -139,7 +139,13 @@ void run() {
         }
       }
     }
-    std::cout << (std::count_if(words.begin(), words.end(), [wbit](const word_t & w) { return w.b & wbit; }) + 1) << "\n";
+    int c = 1;
+    for(auto & w : words) {
+      if(w.b & wbit) {
+        ++c;
+      }
+    }
+    std::cout << c << "\n";
     wbit <<= 1;
   }
 }
