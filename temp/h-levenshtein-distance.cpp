@@ -54,6 +54,10 @@ void add_line(string line) {
   }
 }
 
+bool friendz(const string & s1, const string & s2) {
+  return false;
+}
+
 void run() {
   std::sort(words.begin(), words.end());
   int wbit = 1;
@@ -76,17 +80,29 @@ void run() {
         if(w.b & wbit) {
           continue;
         }
+        if(friendz(w.s, cw)) {
+          w.b |= wbit;
+          nw.push_back(w.s);
+        }
       }
       for(;pos != words.size() && words[pos].s.length() == cl; ++pos) {
         auto & w = words[pos];
         if(w.b & wbit) {
           continue;
         }
+        if(friendz(w.s, cw)) {
+          w.b |= wbit;
+          nw.push_back(w.s);
+        }
       }
       for(;pos != words.size() && words[pos].s.length() == cl + 1; ++pos) {
         auto & w = words[pos];
         if(w.b & wbit) {
           continue;
+        }
+        if(friendz(w.s, cw)) {
+          w.b |= wbit;
+          nw.push_back(w.s);
         }
       }
     }
