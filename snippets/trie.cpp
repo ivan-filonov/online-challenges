@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 
+using std::string;
 template<typename V> using vector = std::vector<V>;
 
 struct trie_t {
@@ -120,77 +121,20 @@ struct trie_t {
     return false;
   }
 
-  bool lev1(const char * w, /*out*/vector<trie_t*> & mv) {
-    trie_t * t = this, * pt = nullptr;
-    // 1. skip all known characters of word
-    for(; *w; ++w) {
-      pt = t;
-      t = t->_find_c(*w);
-      if(!t) {
-        break;
-      }
+  void words(vector<string> & dst, string cur = "") {
+    if(is_word) {
+      dst.emplace_back(cur);
     }
-    if(t && t->is_word) {
-      // exact match
-      mv.push_back(t);
-      return true;
+    for(auto & t : tbuf) {
+      t.words(dst, cur + t.tc);
     }
-    // 2. handle differences
-    if(nullptr == t && w[0] && !w[1] && pt->is_word) {
-      // w should point to last character of word
-      mv.push_back(pt);
-      return true;
-    }
-    if(!*w) {
-      // any leaf of t must be a word
-      for(auto & tt : t->tbuf) {
-        if(tt.is_word) {
-          mv.push_back(&tt);
-        }
-      }
-      return !mv.empty();
-    }
-
-    // 2.1 test if we can skip *w:
-    if(pt->exact(w + 1)) {
-      std::cout << "@" << __LINE__ << " matched '" << (w+1) << "'\n";
-      return true;
-    }
-
-    // 2.2 test if we have one typo:
-    // 2.3 test if any leaf of pt can match w:
-    for(auto & tt : pt->tbuf) {
-      auto p = tt.exact_ptr(w);
-      if(nullptr == p) {
-        p = tt.exact_ptr(w + 1);
-      }
-      if(p) {
-        mv.push_back(p);
-      }
-    }
-
-    return !mv.empty();
   }
 };
 
 trie_t T;
 
-void t2(trie_t * tr, const char * w, bool e) {
-  bool r = tr->lev1(w);
-  std::cout << "lev1('" << w << "') -> " << (r?"true":"false") << ", expected " << (e?"true":"false") << ((e==r) ? "" : " FAIL") << "\n";
-}
-
 void t(trie_t * tr, const char * w, bool e) {
-  vector<trie_t*> v;
-  bool r = tr->lev1(w, v);
-  bool mid = false;
-  for(auto & x : v) {
-    std::cout << (mid ? ", '" : "v: '") << x->W << "'";
-    mid = true;
-  }
-  if(!v.empty()) {
-    std::cout << "\n";
-  }
+  bool r = tr->lev1(w);
   std::cout << "lev1('" << w << "') -> " << (r?"true":"false") << ", expected " << (e?"true":"false") << ((e==r) ? "" : " FAIL") << "\n";
 }
 
@@ -214,5 +158,16 @@ int main() {
   t(&T, "helloz", true);
   t(&T, "hell", true);
   t(&T, "hel", false);
+
+  vector<string> wl;
+  T.words(wl);
+  bool mid = false;
+  for(auto & s : wl) {
+    std::cout << (mid ? ", " : "words: ") << s;
+    mid= true;
+  }
+  if(mid) {
+    std::cout << "\n";
+  }
   return 0;
 }

@@ -1,7 +1,5 @@
-#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <set>
 #include <vector>
 
@@ -24,18 +22,127 @@ int main(int argc, char ** argv) {
 using std::string;
 template<typename V> using vector = std::vector<V>;
 template<typename V> using set = std::set<V>;
-template<typename K, typename V> using map = std::map<K,V>;
 
 using std::move;
 using std::swap;
 
-vector<char> wbuf;
-vector<size_t> wofs;
+struct trie_t {
+  int is_word : 1;
+  std::string W;
+  char tc;
+  vector<trie_t> tbuf;
 
-vector<string> seed_words;
+  trie_t() : is_word(0) {
+  }
+
+  trie_t * _find_c(char c) {
+//    std::cout << __FUNCTION__ << " " << this << "\n";
+    for(auto & t : tbuf) {
+      if(t.tc == c) {
+        return &t;
+      }
+    }
+    return nullptr;
+  }
+
+  void put(const char * word) {
+    auto pword = word;
+    trie_t * t = this;
+    while(*word) {
+      trie_t * n = t->_find_c(*word);
+      if(nullptr == n) {
+        t->tbuf.emplace_back();
+        t->tbuf.back().tc = *word;
+        n = &t->tbuf.back();
+      }
+      t = n;
+      ++word;
+    }
+    t->is_word = 1;
+    t->W = pword;
+  }
+
+  bool exact(const char * w) {
+    trie_t * t = this;
+    for(; *w && t; ++w) {
+      t = t->_find_c(*w);
+    }
+    return t ? t->is_word : false;
+  }
+
+  trie_t * exact_ptr(const char * w) {
+    trie_t * t = this;
+    for(; *w && t; ++w) {
+      t = t->_find_c(*w);
+    }
+    return (t && t->is_word) ? t : nullptr;
+  }
+
+  bool lev1(const char * w) {
+    trie_t * t = this, * pt = nullptr;
+    // 1. skip all known characters of word
+    for(; *w; ++w) {
+      pt = t;
+      t = t->_find_c(*w);
+      if(!t) {
+        break;
+      }
+    }
+    if(t && t->is_word) {
+      // exact match
+      return true;
+    }
+    // 2. handle differences
+    if(nullptr == t && w[0] && !w[1]) {
+      // w should point to last character of word
+      return true;
+    }
+    if(!*w) {
+      // any leaf of t must be a word
+      for(auto & tt : t->tbuf) {
+        if(tt.is_word) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // 2.1 test if we can skip *w:
+    if(pt->exact(w + 1)) {
+      return true;
+    }
+
+    // 2.2 test if we have one typo:
+    // 2.3 test if any leaf of pt can match w:
+    for(auto & tt : pt->tbuf) {
+      if(tt.exact(w+1)) {
+        return true;
+      }
+      if(tt.exact(w)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void words(vector<string> & dst, string cur = "") {
+    if(is_word) {
+      dst.emplace_back(cur);
+    }
+    for(auto & t : tbuf) {
+      t.words(dst, cur + t.tc);
+    }
+  }
+};
 
 const string SEED_END { "END OF INPUT" };
 bool reading_seeds = true;
+
+vector<string> seed_words;
+vector<char> wbuf;
+vector<size_t> wofs;
+
 void add_line(string line) {
   if(reading_seeds) {
     if(SEED_END != line) {
@@ -52,119 +159,53 @@ void add_line(string line) {
   }
 }
 
-bool fw(const char * w1, const char * w2) {
-  while(*w1 == *w2 && *w1) {
-    ++w1;
-    ++w2;
-  }
-  if(!*w2) {
-    // word1 equals word2
-    return true;
-  }
-  int l1 = strlen(w1); 
-  int l2 = strlen(w2); 
-  if(l1 == l2) {
-    ++w1;
-    ++w2;
-    while(*w1 == *w2 && *w1) {
-      ++w1;
-      ++w2;
-    }
-    return 0 == *w1 && 0 == *w2;
-  }
-  if(l2 > l1) {
-    swap(w1, w2);
-    swap(l1, l2);
-  }
-  if(l1 - l2 != 1) {
-    return false;
-  }
-  ++w1;
-  while(*w1 == *w2 && *w1) {
-    ++w1;
-    ++w2;
-  }
-  return 0 == *w1 && 0 == *w2;
-}
-
-bool hit(const char * w, map<int,vector<char*>> & clu) {
-  bool h = false;
-  int wl = strlen(w);
-  for(int cwl = wl - 1; cwl != wl + 2 ; ++cwl) {
-    if(!clu.count(cwl)) {
-      continue;
-    }
-    for(auto cw : clu[cwl]) {
-      if(fw(w, cw)) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
-
 void run() {
-  vector<char*> words (wofs.size());
-  for(size_t i = 0; i != wofs.size(); ++i) {
-    words[i] = wbuf.data() + wofs[i];
-  }
-  std::sort(words.begin(), words.end(), [](const char * a, const char * b) {
-    int la = strlen(a), lb = strlen(b); 
-    if(la == lb) {
-      return strcmp(a,b) < 0;
-    }
-    return la < lb; });
-  vector<map<int,vector<char*>>> clusters;
-  vector<int> civ;
-  for(auto w : words) {
-    civ.clear();
-
-    const int wl = strlen(w);
-    for(size_t  ci = 0; ci != clusters.size(); ++ci) {
-      if(hit(w, clusters[ci])) {
-        civ.push_back(ci);
+  vector<trie_t*> clusters;
+  for(auto ofs : wofs) {
+    char * word = wbuf.data() + ofs;
+    vector<trie_t*> nc;
+    for(auto pc : clusters) {
+      if(pc->lev1(word)) {
+        nc.push_back(pc);
       }
     }
-    if(civ.empty()) {
-      // new cluster
-      clusters.emplace_back();
-      clusters.back()[wl].push_back(w);
+    if(nc.empty()) {
+      trie_t * nt = new trie_t;
+      nt->put(word);
+      clusters.push_back(nt);
     } else {
-      clusters[civ.front()][wl].push_back(w);
-      if(civ.size() > 1) {
-        // combine clusters
-        for(size_t i = 1; i != civ.size(); ++i) {
-          // add cluster civ[i] to cluster civ[0]
-          for(auto & p : clusters[civ[i]]) {
-            auto & src = p.second;
-            auto & dst = clusters[civ[0]][p.first];
-            dst.insert(dst.end(), src.begin(), src.end());
+      auto dst = nc[0];
+      dst->put(word);
+      for(size_t i = nc.size() - 1; i; --i) {
+        auto src = nc[i];
+        for(size_t j = 0; j != clusters.size(); ++j) {
+          if(clusters[j] == src) {
+            clusters.erase(clusters.begin() + j);
+            break;
           }
-          clusters[civ[i]].clear();
+        }
+        vector<string> temp;
+        src->words(temp);
+        delete src;
+        for(auto & tw : temp) {
+          dst->put(tw.c_str());
         }
       }
     }
-  }
-  {
-    decltype(clusters) temp;
-    for(auto & x : clusters) {
-      if(!x.empty()) {
-        temp.emplace_back(move(x));
-      }
-    }
-    temp.swap(clusters);
   }
   for(auto & sw : seed_words) {
-    int c = 1;
-    for(auto & cl : clusters) {
-      if(hit(sw.c_str(), cl)) {
-        for(auto & p : cl) {
-          c += p.second.size();
-        }
+    vector<string> t;
+    trie_t * c = nullptr;
+    for(auto cc : clusters) {
+      if(cc->lev1(sw.c_str())) {
+        c = cc;
         break;
       }
     }
-    std::cout << c << "\n";
+    if(nullptr != c) {
+      c->words(t);
+    }
+    std::cout << (t.size() + 0) << "\n";
   }
 }
 
