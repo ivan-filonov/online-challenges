@@ -100,19 +100,55 @@ struct trie_t :
       is_word = 1;
     }
     for(auto ol : other->leafs) {
-      ptr l;
-      for(auto ll : leafs) {
-        if(ll->c == ol->c) {
-          l = ll;
-          break;
-        }
-      }
+      ptr l = _find_c(ol->c);
       if(!l) {
         leafs.push_back(ol);
       } else {
         l->merge(ol);
       }
     }
+  }
+
+  ptr _find_c (char fc) {
+    for(auto l : leafs) {
+      if(l->c == fc) {
+        return l;
+      }
+    }
+    return ptr();
+  }
+
+  // check if trie contains words that have levenstein distance 1 to w;
+  bool lev1(const char * w) {
+    ptr t = shared_from_this(), pt;
+    while(t && *w) {
+      pt = t;
+      t = t->_find_c(*w);
+      if(t) {
+        ++w;
+      }
+    }
+    if(!*w) {
+      if(t && t->is_word) {
+        std::cout << "@" << __LINE__ << " exact match!\n";
+        return true;
+      }
+      for(auto l : t->leafs) {
+        if(l->is_word) {
+          std::cout << "@" << __LINE__ << " l1 match by adding '" << l->c << "' in the end\n";
+          return true;
+        }
+      }
+      std::cout << "@" << __LINE__ << " no matches\n";
+      return false;
+    }
+    std::cout << "pt = " << pt << "('" << (char)(pt?pt->c:0) << "'), t = " << t << "('" << (char)(t?t->c:0) << "'), w = '" << w << "'\n";
+    return false;
+  }
+
+  void tlev1(const char * w, bool e) {
+    bool r = lev1(w);
+    std::cout << "lev1('" << w << "') -> " << (r?"true":"false") << ", expected " << (e?"true":"false") << ((e==r)?"":" - FAIL") << "\n";
   }
 };
 
@@ -144,6 +180,14 @@ int main() {
   std::cout << "c1->merge(c3);\n";
   c1->merge(c3);
   c1->print2();
+
+  c1->tlev1("word", true);
+  c1->tlev1("wor", true);
+  c1->tlev1("wo", false);
+  c1->tlev1("zord", true);
+  c1->tlev1("ward", true);
+  c1->tlev1("worx", true);
+  c1->tlev1("walk", false);
 
   return 0;
 }
