@@ -50,7 +50,7 @@ struct trie_t :
         v.push_back(t);
         t = t->parent.lock();
       }
-      std::cout << (*mid ? "', '" : "words: '");
+      std::cout << (*mid ? "', '" : "{ '");
       for(size_t i = v.size() - 1; i; --i) {
         std::cout << v[i]->c;
       }
@@ -66,7 +66,7 @@ struct trie_t :
     bool mid = false;
     _print2_r(&mid);
     if(mid) {
-      std::cout << "'\n";
+      std::cout << "' }\n";
     }
   }
 
@@ -102,6 +102,7 @@ struct trie_t :
     for(auto ol : other->leafs) {
       ptr l = _find_c(ol->c);
       if(!l) {
+        ol->parent = shared_from_this();
         leafs.push_back(ol);
       } else {
         l->merge(ol);
@@ -118,10 +119,19 @@ struct trie_t :
     return ptr();
   }
 
+  bool exact(const char * w) {
+    ptr t = shared_from_this();
+    while(*w && t) {
+      t = t->_find_c(*w);
+      ++w;
+    }
+    return t && t->is_word;
+  }
+
   // check if trie contains words that have levenstein distance 1 to w;
   bool lev1(const char * w) {
     ptr t = shared_from_this(), pt;
-    while(t && *w) {
+    while(*w && t) {
       pt = t;
       t = t->_find_c(*w);
       if(t) {
@@ -130,19 +140,35 @@ struct trie_t :
     }
     if(!*w) {
       if(t && t->is_word) {
-        std::cout << "@" << __LINE__ << " exact match!\n";
+//        std::cout << "@" << __LINE__ << " exact match!\n";
         return true;
       }
       for(auto l : t->leafs) {
         if(l->is_word) {
-          std::cout << "@" << __LINE__ << " l1 match by adding '" << l->c << "' in the end\n";
+//          std::cout << "@" << __LINE__ << " l1 match by adding '" << l->c << "' in the end\n";
           return true;
         }
       }
-      std::cout << "@" << __LINE__ << " no matches\n";
+//      std::cout << "@" << __LINE__ << " no matches\n";
       return false;
     }
-    std::cout << "pt = " << pt << "('" << (char)(pt?pt->c:0) << "'), t = " << t << "('" << (char)(t?t->c:0) << "'), w = '" << w << "'\n";
+    // 1. check if we have a character inserted:
+    if(pt->exact(w+1)) {
+//      std::cout << "@" << __LINE__ << " l1 match, excess character: '" << *w << "'\n";
+      return true;
+    }
+    for(auto l : pt->leafs) {
+      // 2. check if we have a typo:
+      if(l->exact(w+1)) {
+//        std::cout << "@" << __LINE__ << " l1 typo: '" << *w << "'\n";
+        return true;
+      }
+      // 3. check if we have a missing character:
+      if(l->exact(w)) {
+//        std::cout << "@" << __LINE__ << " l1 missing char\n";
+        return true;
+      }
+    }
     return false;
   }
 
@@ -152,7 +178,7 @@ struct trie_t :
   }
 };
 
-int main() {
+void base_trie_tests() {
   trie_t::ptr c1 = make_shared<trie_t>();
   c1->put("word");
   c1->put("work");
@@ -184,10 +210,47 @@ int main() {
   c1->tlev1("word", true);
   c1->tlev1("wor", true);
   c1->tlev1("wo", false);
+  c1->tlev1("sword", true);
   c1->tlev1("zord", true);
   c1->tlev1("ward", true);
   c1->tlev1("worx", true);
   c1->tlev1("walk", false);
+  c1->tlev1("wod", true);
+}
 
+int main() {
+  set<trie_t::ptr> clusters;
+  const char * words[] { "word", "work", "sword", "worlds", "worldz", "world" };
+  for(auto word : words) {
+    std::cout << "word = '" << word << "'\n";
+    vector<trie_t::ptr> cv;
+    for(auto c : clusters) {
+      if(c->lev1(word)) {
+        cv.push_back(c);
+      }
+    }
+    if(cv.empty()) {
+      trie_t::ptr t = make_shared<trie_t>();
+      t->put(word);
+      clusters.insert(t);
+      std::cout << "added new cluster\n";
+    } else {
+      cv.front()->put(word);
+      for(size_t i = 1; i != cv.size(); ++i) {
+        std::cout << "merging: ";
+        cv[i]->print2();
+        cv.front()->merge(cv[i]);
+        clusters.erase(cv[i]);
+      }
+      std::cout << "outcome: ";
+      cv.front()->print2();
+    }
+  }
+  for(int i = 0; i < 80; ++i) std::cout << "-"; std::cout << "\n";
+  size_t i = 0;
+  for(auto c : clusters) {
+    std::cout << "#" << c << " ";
+    c->print2();
+  }
   return 0;
 }
