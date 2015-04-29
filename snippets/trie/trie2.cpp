@@ -119,11 +119,13 @@ struct trie_t :
 int main() {
   trie_t::ptr c1 = make_shared<trie_t>();
   c1->put("word");
+  c1->put("work");
   c1->put("world");
   std::cout << "c1:\n";
   c1->print2();
 
   trie_t::ptr c2 = make_shared<trie_t>();
+  c2->put("cord");
   c2->put("word");
   c2->put("words");
   std::cout << "c2:\n";
