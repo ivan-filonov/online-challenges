@@ -69,9 +69,9 @@ void grow_primes(int new_max) {
       }
     }
     if(!flag) {
-      std::cout << "adding " << i << " as prime\n";
       primes.push_back(i);
     }
+    ++i;
   }
 }
 
@@ -95,14 +95,16 @@ double score(const cust_t & cust, const prod_t & prod) {
 }
 
 void process(string line) {
+  grow_primes(100);
 #ifdef TEST
   std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
 
   vector<string> vs;
-  vector<cust_t> vc;
-  vector<prod_t> vp;
+  vector<cust_t> vc;//customers
+  vector<prod_t> vp;//products
 
+  // prepare lists of customers and products
   bool part1 = true;
   for(size_t pos = 0;;) {
     auto delim = line.find_first_of(",;", pos);
@@ -128,6 +130,34 @@ void process(string line) {
     } 
     pos = delim + 1;
   }
+
+  // precalculate pairs
+  vector<double> prec (vc.size() * vp.size());
+  auto pwid = vp.size();
+  auto phei = vc.size();
+  for(int ic = 0; ic != phei; ++ic) {
+    for(int ip = 0; ip != pwid; ++ip) {
+      prec[ic * pwid + ip] = score(vc[ic], vp[ip]);
+    }
+  }
+  // idx = col + line * pwid
+
+  if(phei > pwid) {//turn it
+    vector<double> temp (prec.size());
+    for(int i = 0; i != phei; ++i) {
+      for(int j = 0; j != pwid; ++j) {
+        temp[i + j * phei] =  prec[i * pwid + j];
+      }
+    }
+    std::swap(phei, pwid);
+    temp.swap(prec);
+  }
+
+  // print result
+  double res = 0.25;
+  std::cout.precision(2);
+  std::cout.setf(std::cout.fixed);
+  std::cout << res << "\n";
 }
 
 #ifdef TEST
