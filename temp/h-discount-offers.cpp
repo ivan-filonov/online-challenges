@@ -142,7 +142,7 @@ void process(string line) {
   }
   // idx = col + line * pwid
 
-  if(phei > pwid) {//turn it
+  if(phei > pwid) {//transpose it
     vector<double> temp (prec.size());
     for(int i = 0; i != phei; ++i) {
       for(int j = 0; j != pwid; ++j) {
@@ -151,6 +151,14 @@ void process(string line) {
     }
     std::swap(phei, pwid);
     temp.swap(prec);
+  }
+
+  vector<double> vsum(pwid, 0.0);
+
+  for(int line = 0; line < phei; ++line) {
+    vector<double> nvsum(pwid, 0.0);
+    ;
+    nvsum.swap(vsum);
   }
 
   // print result
