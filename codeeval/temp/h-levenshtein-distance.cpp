@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -32,11 +33,9 @@ using std::make_shared;
 using std::move;
 using std::swap;
 
-const string SEED_END { "END OF INPUT" };
-bool reading_seeds = true;
-
 // lowercase-english-letters-only trie:
 struct trie_t {
+  int count;
   struct stat_s {
     char  word : 1;
 
@@ -50,7 +49,7 @@ struct trie_t {
 
   static const int INITIAL_CAPACITY = 10;
 
-  trie_t() : stat(26 * INITIAL_CAPACITY), tail(26 * INITIAL_CAPACITY), capacity(INITIAL_CAPACITY), next_base(1) { }
+  trie_t() : stat(26 * INITIAL_CAPACITY), tail(26 * INITIAL_CAPACITY), capacity(INITIAL_CAPACITY), next_base(1), count(0) { }
 
   void grow (int new_cap) {
     stat.resize(new_cap * 26);
@@ -71,6 +70,9 @@ struct trie_t {
       }
       base = tail[ofs];
       ++w;
+    }
+    if(!stat[ofs].word) {
+      ++count;
     }
     stat[ofs].word = 1;
   }
@@ -148,7 +150,6 @@ struct trie_t {
       ++w;
     }
     if(*w) {
-      std::cout << "w->'" << w << "', base = " << base << ", prev_base = " << prev_base << "\n";
       if(prev_ofs && !w[1] && stat[prev_ofs].word) {
         return true;
       }
@@ -182,17 +183,59 @@ struct trie_t {
   }
 };
 
+const string SEED_END { "END OF INPUT" };
+bool reading_seeds = true;
+
+vector<string> seeds;
+vector<string> words;
+
 void add_line(string line) {
   if(reading_seeds) {
     if(SEED_END != line) {
+      seeds.emplace_back(move(line));
     } else {
       reading_seeds = false;
     }
   } else {
+    words.emplace_back(move(line));
   }
 }
 
 void run() {
+  std::sort(words.begin(), words.end());
+  vector<trie_t> vt;
+  for(const auto & word : words) {
+    size_t i;
+    for(i = 0; i != vt.size(); ++i) {
+      if(vt[i].lev1(word.c_str())) {
+        break;
+      }
+    }
+    if(vt.size() == i) {
+      vt.emplace_back();
+      vt.back().put(word.c_str());
+    } else {
+      vt[i].put(word.c_str());
+      for(auto j = i + 1; j != vt.size(); ) {
+        if(vt[j].lev1(word.c_str())) {
+          vt[j].merge_to(vt[i]);
+          vt.erase(vt.begin() + j);
+        } else {
+          ++j;
+        }
+      }
+    }
+  }
+  for(const auto & sw : seeds) {
+    int c = 0;
+    for(auto & t : vt) {
+      if(t.lev1(sw.c_str())) {
+        c = t.count;
+        break;
+      }
+    }
+    std::cout << (c+1) << "\n";
+  }
 }
 
 #ifdef TEST
