@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <set>
+#include <list>
 #include <vector>
 
 #ifdef TEST
@@ -24,6 +25,7 @@ template<typename V> using shared_ptr = std::shared_ptr<V>;
 template<typename V> using weak_ptr = std::weak_ptr<V>;
 template<typename V> using set = std::set<V>;
 template<typename V> using vector = std::vector<V>;
+template<typename V> using list = std::list<V>;
 
 // stl functions
 using std::make_shared;
@@ -184,7 +186,7 @@ struct trie_t :
 };
 
 vector<string> seed_words;
-set<trie_t::ptr> clusters;
+list<trie_t::ptr> clusters;
 
 void add_line(string line) {
   if(reading_seeds) {
@@ -203,12 +205,12 @@ void add_line(string line) {
     if(cv.empty()) {
       auto t = make_shared<trie_t>();
       t->put(line.c_str());
-      clusters.insert(t);
+      clusters.push_back(t);
     } else {
       cv.front()->put(line.c_str());
       for(size_t i = 1; i != cv.size(); ++i) {
         cv.front()->merge(cv[i]);
-        clusters.erase(cv[i]);
+        clusters.remove(cv[i]);
       }
     }
   }
