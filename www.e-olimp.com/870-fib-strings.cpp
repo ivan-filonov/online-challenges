@@ -17,9 +17,9 @@ int scount(const char * buf, const char * ss) {
 }
 
 int main() {
-  char ss[26];
+  char substring_to_count[26];
   int N = 0;
-  scanf("%d\n%s", &N, ss);
+  scanf("%d\n%s", &N, substring_to_count);
 
   char buf[90] = {0, };
   int l1 = 1;
@@ -27,20 +27,20 @@ int main() {
 
   long long res = 0;
   if(1 == N) {
-    res = scount("A", ss);
+    res = scount("A", substring_to_count);
   } else if(2 == N) {
-    res = scount("B", ss);
+    res = scount("B", substring_to_count);
   } else {
     long long count[11] = {
       0,//step = 0
-      scount("A", ss),
-      scount("B", ss),
+      scount("A", substring_to_count),
+      scount("B", substring_to_count),
       };
     buf[0] = 'B';
     buf[1] = 'A';
     l2 = 2;
     for(int step = 3; step < 11 && step <= N; ++step) {
-      count[step] = scount(buf, ss);
+      count[step] = scount(buf, substring_to_count);
       for(int ofs = 0; ofs != l1; ++ofs) {
         buf[l2 + ofs] = buf[ofs];
       }
