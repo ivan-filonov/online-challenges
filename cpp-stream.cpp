@@ -17,6 +17,7 @@ int main(int argc, char ** argv) {
 }
 
 using std::string;
+// required when TEST is defined
 template<typename V> using vector = std::vector<V>;
 
 void process(string line) {
