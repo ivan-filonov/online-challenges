@@ -56,6 +56,7 @@ int main() {
         count[9] - count[8] - count[7],
         count[10] - count[9] - count[8],
       };
+//      printf("d: { %lld, %lld }\n", d[0], d[1]);
       int c1 = count[9];
       int c2 = count[10];
       for(int step = 10; step < N; ++step) {
