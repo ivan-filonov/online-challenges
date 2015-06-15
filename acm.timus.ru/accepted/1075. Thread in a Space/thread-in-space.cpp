@@ -40,6 +40,11 @@ double operator * (vec_3d a, vec_3d b) {
   return a.x() * b.x() + a.y() * b.y() + a.z() * b.z();
 }
 
+double _acos(double angle) {
+  angle = std::min(1.0, std::max(-1.0, angle));
+  return std::acos(angle);
+}
+
 int main() {
   std::cin.sync_with_stdio(false);
 
@@ -65,38 +70,62 @@ int main() {
     return 0;
   }
 
-  auto APa = AB * (projA / AB.len2());
-  auto CPa = APa - AC;
-  std::cout << "APa.len() = " << APa.len() << ", CPa.len() = " << CPa.len() << ", AB.len() = " << AB.len() << "\n";
-  if(CPa.len() > r) {
+  auto AP = AB * (projA / AB.len2());
+  auto CP = AP - AC;
+
+#ifdef TEST
+  std::cout << "CP.len() = " << CP.len() << "\n";
+#endif//#ifdef TEST
+
+  if(CP.len() >= r) {
     std::cout << AB.len();
     return 0;
   }
-  std::cout << "(CPa * APa) = " << (CPa * APa) << "\n"; 
-  std::cout << "CPa: " << CPa.x() << " " << CPa.y() << " " << CPa.z() << "\n";
-
-  std::cout << "projA = " << projA << ", AB.len = " << AB.len() << "\n";
 
   auto BC = C - B;
 
   auto distAC = AC.len();
   auto distBC = BC.len();
 
+#ifdef TEST
   std::cout << "distAC = " << distAC << "\n";
   std::cout << "distBC = " << distBC << "\n";
+#endif//#ifdef TEST
 
-  auto tangA = std::sqrt(distAC * distAC - r * r);
-  auto tangB = std::sqrt(distBC * distBC - r * r);
+  auto tangA = std::sqrt(AC.len2() - r * r);
+  auto tangB = std::sqrt(BC.len2() - r * r);
 
+#ifdef TEST
   std::cout << "tangA = " << tangA << "\n";
   std::cout << "tangB = " << tangB << "\n";
+#endif//#ifdef TEST
 
-  ;
+  auto angleA = _acos(r/AC.len());
+  auto angleB = _acos(r/BC.len());
+
+#ifdef TEST
+  std::cout << "angleA = " << angleA << "\n";
+  std::cout << "angleB = " << angleB << "\n";
+#endif//#ifdef TEST
+
+  auto CA = A - C;
+  auto CB = B - C;
+
+#ifdef TEST
+  std::cout << "(CA * CB) = " << (CA * CB) << "\n";
+  std::cout << "(CA * CB / CA.len()) = " << (CA * CB / CA.len()) << "\n";
+  std::cout << "(CA * CB / CA.len() / CB.len()) = " << (CA * CB / CA.len() / CB.len()) << "\n";
+#endif//#ifdef TEST
+
+  auto angleACB  = _acos(CA * CB / CA.len() / CB.len());
+#ifdef TEST
+  std::cout << "angleACB = " << angleACB << "\n";
+#endif//#ifdef TEST
 
   std::cout.setf(std::cout.fixed);
   std::cout.precision(2);
 
-  std::cout << (tangA + tangB );
+  std::cout << (tangA + tangB + r * (angleACB - angleA - angleB) );
 
   return 0;
 }
