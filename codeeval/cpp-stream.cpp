@@ -30,8 +30,10 @@ void process(string line) {
 #ifdef TEST
 void test() {
   vector<string> v_test {
+
   };
   vector<string> v_expect {
+
   };
   for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
     process(v_test[i]);
