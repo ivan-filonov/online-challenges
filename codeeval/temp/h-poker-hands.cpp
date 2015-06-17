@@ -202,53 +202,35 @@ void process(string line) {
   } else {
     int comp = 0;
     switch(left.hand_rank) {
-      case hr::highest_card:
-        comp = left.compare_by_highest(right);
-        break;
       case hr::one_pair:
         comp = left.pair1_rank - right.pair1_rank;
-        if(!comp) {
-          comp = left.compare_by_highest(right);
-        }
         break;
       case hr::two_pairs:
         comp = left.pair1_rank - right.pair1_rank;
         if(!comp) {
           comp = left.pair2_rank - right.pair2_rank;
         }
-        if(!comp) {
-          comp = left.compare_by_highest(right);
-        }
         break;
       case hr::three_of_a_kind:
         comp = left.triple_rank - right.triple_rank;
-        if(!comp) {
-          comp = left.compare_by_highest(right);
-        }
-        break;
-      case hr::flush:
-        comp = left.compare_by_highest(right);
         break;
       case hr::full_house:
-        comp = left.triple_rank - right.triple_rank;
+        comp = std::max(left.triple_rank, left.pair1_rank) - std::max(right.triple_rank, right.pair1_rank);
         if(!comp) {
-          comp = left.pair1_rank - right.pair1_rank;
-        }
-        if(!comp) {
-          comp = left.compare_by_highest(right);
+          comp = std::min(left.triple_rank, left.pair1_rank) - std::min(right.triple_rank, right.pair1_rank);
         }
         break;
       case hr::four_of_a_kind:
         comp = left.four_rank - right.four_rank;
-        if(!comp) {
-          comp = left.compare_by_highest(right);
-        }
         break;
       case hr::straight:
       case hr::straight_flush:
         comp = left.straight_rank - right.straight_rank;
         break;
     };
+    if(!comp) {
+      comp = left.compare_by_highest(right);
+    }
     if(comp < 0) {
       std::cout << "right\n";
     } else if(!comp) {
