@@ -132,10 +132,16 @@ void process(string line) {
   auto get_left = [&L, &p](int i) { return i ? p[i-1] : (L - 1); };
   auto get_right = [&R, &p](int i) { return p.size() == i ? R + 1 : p[i]; };
 
+  int result = 0;
+
   // посчитать все последовательности с 0 палиндромами внутре
   for(int r = 0; r <= p.size(); ++r) {
-
+    int k = get_right(r) - get_left(r) - 1;
+    result += k * (k + 1) / 2;
   }
+
+  std::cout << "intermediate result: " << result << "\n";
+
   // последовательности с 2*k палиндромами внутре
   for(int skip = 2; skip <= p.size(); skip += 2) {
     ;
