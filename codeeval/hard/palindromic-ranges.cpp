@@ -115,15 +115,6 @@ void process(string line) {
     } while(cur_pal <= R);
   }
 
-  {
-    bool mid = false;
-    for(auto v : p) {
-      std::cout << (mid ? ", " : "palindromes in range: ") << v;
-      mid = true;
-    }
-    std::cout << "\n";
-  }
-
   if(L==R) {
     std::cout << (1 - p.size()) << "\n";
     return;
@@ -140,12 +131,16 @@ void process(string line) {
     result += k * (k + 1) / 2;
   }
 
-  std::cout << "intermediate result: " << result << "\n";
-
   // последовательности с 2*k палиндромами внутре
   for(int skip = 2; skip <= p.size(); skip += 2) {
-    ;
+    for(int r0 = 0, r1 = skip; r1 <= p.size(); ++r0, ++r1) {
+      int c0 = get_right(r0) - get_left(r0);
+      int c1 = get_right(r1) - get_left(r1);
+      result += c0 * c1;
+    }
   }
+
+  std::cout << result << "\n";
 }
 
 #ifdef TEST
@@ -159,7 +154,7 @@ void test() {
   vector<string> v_expect {
     "1",
     "12",
-    "2",
+    "1",
     "хер знает",
   };
   for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
