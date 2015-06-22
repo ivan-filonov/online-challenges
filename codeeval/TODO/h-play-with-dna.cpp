@@ -34,8 +34,10 @@
  *   The length of a segment S is in a range from 3 to 50.
  *
  * */
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 #ifdef TEST
@@ -60,16 +62,50 @@ void process(string line) {
 #ifdef TEST
   std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-//    std::istringstream ss { line };
+  string pattern;
+  string data;
+  int max_errors;
+  {
+    std::istringstream ss { std::move(line) };
+    ss >> pattern >> max_errors >> data;
+    ++max_errors;
+  }
+
+  vector<vector<string>> rv (max_errors + 1);
+  for(int ofs = 0; ofs + pattern.length() != data.length(); ++ofs) {
+    int ec = 0;
+    for(int i = 0; ec != max_errors && i != pattern.length(); ++i) {
+      if(pattern[i] != data[i + ofs]) {
+        ++ec;
+      }
+    }
+    if(ec != max_errors) {
+      rv[ec].emplace_back(data.substr(ofs, pattern.length()));
+    }
+  }
+
+  bool mid = false;
+  for(auto & v : rv) {
+    std::sort(v.begin(), v.end());
+    for(auto & s : v) {
+      std::cout << (mid ? " " : "") << s;
+      mid = true;
+    }
+  }
+  std::cout << (mid ? "\n" : "No match.\n");
 }
 
 #ifdef TEST
 void test() {
   vector<string> v_test {
-
+    "CCC 1 CGCCCGAATCCAG",
+    "GCGAG 2 CCACGGCCTATGTATTTGCAAGGATCTGGGCCAGCTAAATCAGCACCCCTGGAACGGCAAGGTTCATTTTGTTGCGCGCATAG",
+    "CGGCGCC 1 ACCCCCGCAGCCATATGTCCCCAGCTATTTAATGAGGGCCCCGAACACGGGGAGTCTTACACGATCTGCCCTGGAATCGC",
   };
   vector<string> v_expect {
-
+    "CCC CCA CCG CGC GCC TCC",
+    "GCAAG GCAAG GCCAG GCGCG GCGCA GCTAA",
+    "No match",
   };
   for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
     process(v_test[i]);

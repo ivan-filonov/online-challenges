@@ -58,7 +58,7 @@ struct trie_t {
   }
 
   void put(const char * w) {
-    int base = 0, ofs;
+    int base = 0, ofs = 0;
     while(*w) {
       ofs = base * 26 + (*w - 'a');
       if(!tail[ofs]) {
@@ -78,7 +78,7 @@ struct trie_t {
   }
 
   bool _exact(const char * w, int base) {
-    int ofs;
+    int ofs = 0;
     while(*w) {
       ofs = base * 26 + (*w - 'a');
       base = tail[ofs];
@@ -138,7 +138,7 @@ struct trie_t {
   }
 
   bool lev1(const char * w) {
-    int base = 0, ofs, prev_base = 0, prev_ofs = 0;
+    int base = 0, ofs = 0, prev_base = 0, prev_ofs = 0;
     while(*w){
       prev_ofs = ofs;
       ofs = base * 26 + (*w - 'a');
