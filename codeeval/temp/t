@@ -1,0 +1,2 @@
+#!/bin/sh
+gcc -std=c++11 -g -lstdc++ -DTEST $@ && ./a.out && rm a.out
