@@ -106,7 +106,19 @@ bigint operator * (const bigint & n, const num_t c) {
 }
 
 bigint operator * (const bigint & a, const bigint & b) {
-  throw 1;
-  return bigint();
+	bigint res;
+	if(a.size() < b.size()) {
+		return b * a;
+	}
+	bigint cur = a;
+	for(int i = 0; i != b.size(); ++i) {
+		if(i) {
+			cur.insert(cur.begin(), 0);
+		}
+		if(b[i]) {
+			res = res + cur * b[i];
+		}
+	}
+	return res;
 }
 //-----------------------------------------------bignum.hpp-------------------------------

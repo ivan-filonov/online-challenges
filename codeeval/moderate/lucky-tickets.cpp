@@ -145,30 +145,69 @@ bigint operator * (const bigint & n, const num_t c) {
 }
 
 bigint operator * (const bigint & a, const bigint & b) {
-  throw 1;
-  return bigint();
+	bigint res;
+	if(a.size() < b.size()) {
+		return b * a;
+	}
+	bigint cur = a;
+	for(int i = 0; i != b.size(); ++i) {
+		if(i) {
+			cur.insert(cur.begin(), 0);
+		}
+		if(b[i]) {
+			res = res + cur * b[i];
+		}
+	}
+	return res;
 }
 //-----------------------------------------------bignum.hpp-------------------------------
 
 void process(string line) {
 #ifdef TEST
-  std::cout << "s = '" << line << "'\n";
+	std::cout << "s = '" << line << "'\n";
 #endif //#ifdef TEST
-  const int total_digits = std::stoi(line);
-  const int cnt_to_chk = total_digits/2;// *[3 - all input numbers are even]*
+	const int total_digits = std::stoi(line);
+	const int cnt_to_chk = total_digits/2;// *[3 - all input numbers are even]*
+
+	using res_type = bigint;
+	vector<res_type> current;
+	vector<res_type> next;
+	current.assign(10, res_type({1}));
+	for(int cnt = 1; cnt < cnt_to_chk; ++cnt) {
+		next.resize(cnt * 9 + 10);
+		for(int i = 0; i < next.size(); ++i) {
+			res_type sum({0});
+			for(int l = 0; l != 10 && l != i + 1; ++l) {
+				if(i - l < current.size()) {
+					sum = sum + current[i - l];
+				}
+			}
+			next[i] = sum;
+		}
+		current.swap(next);
+	}
+	res_type sum (0);
+	for(auto val : current) {
+		sum = sum + val * val;
+	}
+	std::cout << sum << "\n";
 }
 
 #ifdef TEST
 void test() {
   vector<string> v_test {
+	"2",
 	"4",
 	"6",
 	"8",
+	"40",
   };
   vector<string> v_expect {
+	"10",
 	"670",
 	"55252",
 	"4816030",
+	"?",
   };
   for(int i = 0, j = std::min(v_test.size(), v_expect.size()); i < j; ++i) {
     process(v_test[i]);
