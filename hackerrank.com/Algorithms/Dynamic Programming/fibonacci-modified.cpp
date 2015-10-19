@@ -68,8 +68,6 @@ void imul(vector<int> &r, const vector<int> & v, int i) {
 }
 
 void sqr(vector<int> &r, const vector<int> &v) {
-  r.reserve(v.size() * 2 + 1);
-  r.clear();
   vector<int> vs(v), t, t1;
   for(int i : v) {
     imul(t, vs, i);

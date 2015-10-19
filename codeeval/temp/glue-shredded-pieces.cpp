@@ -1,15 +1,12 @@
 #include <stdio.h>
 
-#include <fstream>
 #include <unordered_map>
 #include <vector>
 
-namespace {
 #ifdef TEST
 void test();
 #endif //#ifdef TEST
 void process_file(char *);
-}
 
 int main(int argc, char **argv) {
 #ifdef TEST
@@ -19,8 +16,6 @@ int main(int argc, char **argv) {
 #endif //#ifdef TEST
   return 0;
 }
-
-namespace {
 
 void process(std::string s);
 
@@ -42,9 +37,9 @@ void test() {
 #endif //#ifdef TEST
 
 void process_file(char *path) {
-  std::ifstream stream(path);
-  for (std::string line; std::getline(stream, line);) {
-    process(line);
+  FILE *f = ::fopen(path, "rt");
+  for (std::vector<char> line(32768); ::fgets(&line[0], line.size(), f);) {
+    process(&line[0]);
   }
 }
 
@@ -80,10 +75,11 @@ void process(std::string line) {
     std::unordered_map<std::string, int> ids;
     for (size_t i = 0; i < items.size(); ++i) {
       auto &item = items[i];
-      if (item.value.length() - 1 != pieceSize)
+      auto &value = item.value;
+      if (value.length() - 1 != pieceSize)
         throw item;
 
-      auto &left = ids[std::string(item.value.begin(), item.value.end() - 1)];
+      auto &left = ids[std::string(value.begin(), value.end() - 1)];
       if (!left)
         left = ids.size();
       item.left = left;
@@ -91,7 +87,7 @@ void process(std::string line) {
       parts[left].leftCount++;
       parts[left].left = &item;
 
-      auto &right = ids[std::string(item.value.begin() + 1, item.value.end())];
+      auto &right = ids[std::string(value.begin() + 1, value.end())];
       if (!right)
         right = ids.size();
       item.right = right;
@@ -169,5 +165,4 @@ void process(std::string line) {
     printf("%s", &head->value[pieceSize]);
   }
   printf("\n");
-}
 }
