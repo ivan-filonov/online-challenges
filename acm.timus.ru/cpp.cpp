@@ -2,9 +2,9 @@
 #include <vector>
 
 using std::string;
-template<typename V> using vector = std::vector<V>;
+template <typename V> using vector = std::vector<V>;
 
 int main() {
-	std::cin.sync_with_stdio(false);
-	return 0;
+  std::cin.sync_with_stdio(false);
+  return 0;
 }
