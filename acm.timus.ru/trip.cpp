@@ -5,7 +5,8 @@ as much as possible from this attraction, the agency has accepted a shrewd
 decision: it is necessary to find the shortest route which begins and ends at
 the same place.
  Your task is to write a program which finds such a route. In the town there are
-N crossing points numbered from 1 to N and M two-way roads numbered from 1 to M.
+numCrosses crossing points numbered from 1 to numCrosses and numRoads two-way
+roads numbered from 1 to numRoads.
 Two crossing points can be connected by multiple roads, but no road connects a
 crossing point with itself. Each sightseeing route is a sequence of road numbers
 y1, …, yk, k > 2. The road yi (1 ≤ i ≤ k − 1) connects crossing points xi and
@@ -18,10 +19,13 @@ is not possible, because there is no sightseeing route in the town.
 
  Input
  Input contains T tests (1 ≤ T ≤ 5). The first line of each test contains two
-integers: the number of crossing points N and the number of roads M (3 ≤ N ≤
-100; 3 ≤ M ≤ N · (N − 1)). Each of the next M lines describes one road. It
+integers: the number of crossing points numCrosses and the number of roads
+numRoads (3 ≤ numCrosses ≤
+100; 3 ≤ numRoads ≤ numCrosses · (numCrosses − 1)). Each of the next numRoads
+lines describes one road. It
 contains 3 integers: the number of its first crossing point a, the number of the
-second one b, and the length of the road l (1 ≤ a, b ≤ N; a ≠ b; 1 ≤ l ≤ 300).
+second one b, and the length of the road l (1 ≤ a, b ≤ numCrosses; a ≠ b; 1 ≤ l
+≤ 300).
 Input is ended with a “−1” line.
 
  Output
@@ -62,17 +66,19 @@ template <typename V> using vector = std::vector<V>;
 template <typename K, typename V> using map = std::unordered_map<K, V>;
 
 int main() {
+  const char *NO = "No solution.\n";
   std::cin.sync_with_stdio(false);
-  for (int N, M; std::cin >> N && N > -1;) {
-    std::cin >> M;
-    for (int i = 0; i < M; ++i) {
+  for (int numCrosses, numRoads; std::cin >> numCrosses && numCrosses > -1;) {
+    std::cin >> numRoads;
+    for (int i = 0; i < numRoads; ++i) {
       int u, v, dist;
       std::cin >> u >> v >> dist;
     }
-    const char *NO = "No solution.\n";
-    if (2 >= N) {
+    if (2 >= numCrosses) {
       std::cout << NO;
       continue;
     }
+    // TODO:solve
+    ;
   }
 }
