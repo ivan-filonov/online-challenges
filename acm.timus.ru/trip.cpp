@@ -1,84 +1,231 @@
-/*
- There is a travel agency in Adelton town on Zanzibar island. It has decided to
-offer its clients, besides many other attractions, sightseeing the town. To earn
-as much as possible from this attraction, the agency has accepted a shrewd
-decision: it is necessary to find the shortest route which begins and ends at
-the same place.
- Your task is to write a program which finds such a route. In the town there are
-numCrosses crossing points numbered from 1 to numCrosses and numRoads two-way
-roads numbered from 1 to numRoads.
-Two crossing points can be connected by multiple roads, but no road connects a
-crossing point with itself. Each sightseeing route is a sequence of road numbers
-y1, …, yk, k > 2. The road yi (1 ≤ i ≤ k − 1) connects crossing points xi and
-xi+1, the road yk connects crossing points xk and x1. All the numbers x1, …, xk
-should be different. The length of the sightseeing route is the sum of the
-lengths of all roads on the sightseeing route, i.e. L(y1) + L(y2) + … + L(yk)
-where L(yi) is the length of the road yi (1 ≤ i ≤ k). Your program has to find
-such a sightseeing route, the length of which is minimal, or to specify that it
-is not possible, because there is no sightseeing route in the town.
-
- Input
- Input contains T tests (1 ≤ T ≤ 5). The first line of each test contains two
-integers: the number of crossing points numCrosses and the number of roads
-numRoads (3 ≤ numCrosses ≤
-100; 3 ≤ numRoads ≤ numCrosses · (numCrosses − 1)). Each of the next numRoads
-lines describes one road. It
-contains 3 integers: the number of its first crossing point a, the number of the
-second one b, and the length of the road l (1 ≤ a, b ≤ numCrosses; a ≠ b; 1 ≤ l
-≤ 300).
-Input is ended with a “−1” line.
-
- Output
- Each line of output is an answer. It contains either a string “No solution.” in
-case there isn't any sightseeing route, or it contains the numbers of all
-crossing points on the shortest sightseeing route in the order how to pass them
-(i.e. the numbers x1 to xk from our definition of a sightseeing route),
-separated by single spaces. If there are multiple sightseeing routes of the
-minimal length, you can output any one of them.
-
- test:
- input
- 5 7
- 1 4 1
- 1 3 300
- 3 1 10
- 1 2 16
- 2 3 100
- 2 5 15
- 5 3 20
- 4 3
- 1 2 10
- 1 3 20
- 1 4 30
- -1
-
-expected:
-1 3 5 2
-No solution.
- */
 #include <algorithm>
+#include <climits>
+#include <cstring>
+#include <fstream>
 #include <iostream>
-#include <unordered_map>
-#include <vector>
+#include <sstream>
 
-using std::string;
-template <typename V> using vector = std::vector<V>;
-template <typename K, typename V> using map = std::unordered_map<K, V>;
+static const int INF = INT_MAX / 4;
 
-int main() {
-  const char *NO = "No solution.\n";
-  std::cin.sync_with_stdio(false);
-  for (int numCrosses, numRoads; std::cin >> numCrosses && numCrosses > -1;) {
-    std::cin >> numRoads;
-    for (int i = 0; i < numRoads; ++i) {
-      int u, v, dist;
-      std::cin >> u >> v >> dist;
-    }
-    if (2 >= numCrosses) {
-      std::cout << NO;
+// граф
+static int g_nverts;
+// список вертексов
+static int g_vlist[128];
+// есть ли вертекс
+static bool g_have_vert[128];
+// сколько у вертекса ребер
+static int g_vertex_nedges[128];
+// списки ребер по вертексам
+static int g_elist[128][128];
+// есть ли ребро у вертекса
+static bool g_have_edge[128][128];
+// длинны ребер
+static int g_edges[128][128];
+
+static void g_addv(int u) {
+  if (g_have_vert[u]) {
+    return;
+  }
+
+  g_vlist[g_nverts] = u;
+  g_have_vert[u] = true;
+  g_nverts += 1;
+}
+
+static void g_adde(int u, int v, int len) {
+  g_addv(u);
+  g_addv(v);
+
+  if (g_have_edge[u][v]) {
+    g_edges[u][v] = std::min(g_edges[u][v], len);
+    return;
+  }
+
+  g_have_edge[u][v] = true;
+  g_edges[u][v] = len;
+  g_elist[u][g_vertex_nedges[u]] = v;
+  g_vertex_nedges[u] += 1;
+}
+
+static bool g_read(std::istream &cin) {
+  g_nverts = 0;
+  std::memset(g_vlist, 0, sizeof(g_vlist));
+  std::memset(g_have_vert, 0, sizeof(g_have_vert));
+  std::memset(g_vertex_nedges, 0, sizeof(g_vertex_nedges));
+  std::memset(g_elist, 0, sizeof(g_elist));
+  std::memset(g_have_edge, 0, sizeof(g_have_edge));
+  std::memset(g_edges, 0, sizeof(g_edges));
+
+  int nverts;
+  int nedges;
+
+  cin >> nverts;
+  if (-1 == nverts) {
+    return false;
+  }
+
+  cin >> nedges;
+
+  for (int i = 0; i < nedges; ++i) {
+    int u, v, len;
+    cin >> u >> v >> len;
+    g_adde(u, v, len);
+    g_adde(v, u, len);
+  }
+  return true;
+}
+
+// решение
+// длинна пути по циклу
+static int s_dist;
+// сколько в цикле вершин
+static int s_len;
+// сам путь
+static int s_points[128];
+
+// вариант решения
+static int s_move[128];
+
+static int s_calc_dist(const int u, const int v) {
+  int sum = g_edges[u][v];
+  for (int cur = u; cur != v;) {
+    const int next = s_move[cur];
+    sum += g_edges[cur][next];
+    cur = next;
+  }
+  return sum;
+}
+
+static int f_size;
+static int f_list[128];
+static int f_dist[128];
+static bool f_checked[128];
+
+static void update_edges(const int u, const int v, const int node,
+                         const int ndist) {
+  for (int n2 = 0, ne = g_vertex_nedges[node]; n2 < ne; ++n2) {
+    const int node2 = g_elist[node][n2];
+    if (node == u && node2 == v) {
       continue;
     }
-    // TODO:solve
-    ;
+
+    if (f_checked[node2]) {
+      continue;
+    }
+
+    const int new_dist = ndist + g_edges[node][node2];
+
+    bool add = true;
+    for (int i = 0; i < f_size; ++i) {
+      if (f_list[i] == node2) {
+        add = false;
+        if (new_dist < f_dist[i]) {
+          f_dist[i] = new_dist;
+          s_move[node2] = node;
+        }
+      }
+    }
+    if (add) {
+      f_list[f_size] = node2;
+      f_dist[f_size] = new_dist;
+      f_size += 1;
+      s_move[node2] = node;
+    }
+  }
+}
+
+static bool trace(const int u, const int v) {
+  s_move[u] = v;
+  s_move[v] = u;
+
+  f_size = 1;
+  f_list[0] = u;
+  f_dist[0] = 0;
+
+  std::memset(f_checked, 0, sizeof(f_checked));
+
+  while (f_size > 0) {
+    int min = 0;
+    for (int i = 0; i < f_size; ++i) {
+      if (f_dist[i] < f_dist[min]) {
+        min = i;
+      }
+    }
+
+    const int node = f_list[min];
+    const int ndist = f_dist[min];
+
+    f_size -= 1;
+    std::swap(f_list[min], f_list[f_size]);
+    std::swap(f_dist[min], f_dist[f_size]);
+
+    f_checked[node] = true;
+
+    if (node == v) {
+      return true;
+    }
+
+    update_edges(u, v, node, ndist);
+  }
+
+  return false;
+}
+
+static bool solve() {
+  s_dist = 0;
+  for (int ui = 0; ui < g_nverts; ++ui) {
+    const int u = g_vlist[ui];
+    for (int vi = 0, ve = g_vertex_nedges[u]; vi < ve; ++vi) {
+      const int v = g_elist[u][vi];
+      if (u > v) {
+        continue;
+      }
+
+      if (!trace(u, v)) {
+        continue;
+      }
+
+      // s_points - решение
+      if (s_dist && s_calc_dist(u, v) >= s_dist) {
+        continue;
+      }
+
+      s_len = 0;
+      s_dist = 0;
+      for (int cur = v;; cur = s_move[cur]) {
+        s_points[s_len] = cur;
+        s_dist += g_edges[cur][s_move[cur]];
+        s_len += 1;
+        if (u == cur) {
+          break;
+        }
+      }
+    }
+  }
+  return s_dist != 0;
+}
+
+int main() {
+#if ONLINE_JUDGE
+  using std::cin;
+  cin.sync_with_stdio(false);
+#else
+  std::fstream tf("test2");
+  auto &cin = tf;
+#endif
+  for (;;) {
+    if (!g_read(cin)) {
+      break;
+    }
+
+    std::ostringstream os;
+    if (!solve()) {
+      os << "No solution.";
+    } else {
+      for (int i = 0; i < s_len; ++i) {
+        os << (i ? " " : "") << s_points[i];
+      }
+    }
+    std::cout << os.str() << "\n";
   }
 }
