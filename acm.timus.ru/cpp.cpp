@@ -5,7 +5,7 @@
 template <typename V> using vector = std::vector<V>;
 
 int main() {
-#ifdef ONLINE_JUDGE
+#if ONLINE_JUDGE
   using std::cin;
   cin.sync_with_stdio(false);
 #else
