@@ -12,4 +12,4 @@ PART=${PWD##*/}
 if [ ${PART} == "online-challenges" ]; then
 	PART="common"
 fi
-git commit -m "${PART}: ${MSG};"
+git commit -m "${PART}: ${MSG};" && git status
