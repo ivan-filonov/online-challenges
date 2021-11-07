@@ -2,14 +2,14 @@
 #include <sstream>
 #include <vector>
 
-template <typename V> using vector = std::vector<V>;
+using namespace std;
 
-int main() {
+int main ()
+{
 #if ONLINE_JUDGE
-  using std::cin;
-  cin.sync_with_stdio(false);
+  cin.sync_with_stdio (false);
 #else
-  std::istringstream cin;
+  istringstream cin;
 #endif
   return 0;
 }
