@@ -23,3 +23,9 @@
 *.app
 # dot-files
 .*
+# rust
+Cargo.lock
+debug/
+target/
+**/*.rs.bk
+*.pdb
