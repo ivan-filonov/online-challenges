@@ -1,6 +1,4 @@
 #!/bin/bash
-git add -A
-
 if [ -z "$1" ];
 then
 echo need patch comment
