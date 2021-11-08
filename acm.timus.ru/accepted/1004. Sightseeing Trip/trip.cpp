@@ -11,7 +11,8 @@ static const int INF = INT_MAX / 4;
 
 static std::vector<std::vector<int>> graph;
 
-static bool readGraph(std::istream &stream) {
+static bool readGraph (std::istream &stream)
+{
   int points;
   stream >> points;
   if (-1 == points) {
@@ -21,7 +22,7 @@ static bool readGraph(std::istream &stream) {
   int edges;
   stream >> edges;
 
-  graph.assign(points, std::vector<int>(points, INF));
+  graph.assign (points, std::vector<int> (points, INF));
 
   for (int i = 0; i < edges; ++i) {
     int u, v, d;
@@ -39,15 +40,16 @@ static bool readGraph(std::istream &stream) {
 
 static std::vector<std::vector<int>> routes;
 
-static bool find_best_edge(int &best_u, int &best_v) {
-  const int N = graph.size();
-  int best_dist = INF;
+static bool find_best_edge (int &best_u, int &best_v)
+{
+  const int N = graph.size ();
+  int       best_dist = INF;
   best_u = best_v = 0;
 
   for (int i = 0; i < N; ++i) {
     routes[i][i] = 0;
 
-		// попытаться обновить лучший цикл
+    // попытаться обновить лучший цикл
     for (int j = 0; j < i; ++j) {
       for (int k = 0; k < i; ++k) {
         if (j == k) {
@@ -75,7 +77,7 @@ static bool find_best_edge(int &best_u, int &best_v) {
     }
 
     for (int j = 0; j < i; ++j) {
-			// попытаться склеить 2 пути
+      // попытаться склеить 2 пути
       for (int k = 0; k < i; ++k) {
         if (routes[j][k] <= routes[j][i] + routes[i][k]) {
           continue;
@@ -87,8 +89,9 @@ static bool find_best_edge(int &best_u, int &best_v) {
   return INF != best_dist;
 }
 
-static void floyd_warshall_on_routes() {
-  const int N = graph.size();
+static void floyd_warshall_on_routes ()
+{
+  const int N = graph.size ();
   for (int i = 0; i < N; ++i) {
     routes[i][i] = 0;
   }
@@ -105,23 +108,24 @@ static void floyd_warshall_on_routes() {
   }
 }
 
-static bool solve(std::vector<int> &solution) {
-  const int N = graph.size();
-  routes.assign(N, std::vector<int>(N, INF));
+static bool solve (std::vector<int> &solution)
+{
+  const int N = graph.size ();
+  routes.assign (N, std::vector<int> (N, INF));
 
   int u, v;
-  if (!find_best_edge(u, v)) {
+  if (!find_best_edge (u, v)) {
     return false;
   }
 
   graph[u][v] = graph[v][u] = INF;
   routes = graph;
 
-  floyd_warshall_on_routes();
+  floyd_warshall_on_routes ();
 
-  solution.clear();
+  solution.clear ();
   while (u != v) {
-    solution.push_back(v + 1);
+    solution.push_back (v + 1);
     for (int i = 0; i < N; ++i) {
       if (routes[v][u] == routes[i][u] + graph[v][i]) {
         v = i;
@@ -129,27 +133,28 @@ static bool solve(std::vector<int> &solution) {
       }
     }
   }
-  solution.push_back(u + 1);
+  solution.push_back (u + 1);
 
   return true;
 }
 
-int main() {
+int main ()
+{
 #if ONLINE_JUDGE
   using std::cin;
-  cin.sync_with_stdio(false);
+  cin.sync_with_stdio (false);
 #else
-  std::fstream tf("test");
-  auto &cin = tf;
+  std::fstream tf ("test");
+  auto &       cin = tf;
 #endif
   for (;;) {
-    if (!readGraph(cin)) {
+    if (!readGraph (cin)) {
       break;
     }
 
     std::ostringstream oss;
-    std::vector<int> solution;
-    if (!solve(solution)) {
+    std::vector<int>   solution;
+    if (!solve (solution)) {
       oss << "No solution.";
     } else {
       bool flag = false;
@@ -158,6 +163,6 @@ int main() {
         flag = true;
       }
     }
-    std::cout << oss.str() << "\n";
+    std::cout << oss.str () << "\n";
   }
 }

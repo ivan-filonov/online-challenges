@@ -1,0 +1,9 @@
+Answer is number in the (1, 1) of this matrix
+|k - 1  k - 1| ^ N
+|  1     0   |
+Example:
+If n is 2 and k is 10 then
+|9 9| ^ 2 = |90 81|
+|1 0|       |9   9|
+And answer is 90.
+Use fast power algorithm to count it in O(logn).

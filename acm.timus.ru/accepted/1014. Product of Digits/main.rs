@@ -7,15 +7,18 @@ fn solve(input: &mut dyn Read, writer: &mut dyn Write) {
     let mut buf = String::new();
     reader.read_line(&mut buf).expect("ok");
     let mut n: i32 = buf.trim().parse().expect("number");
-    if n < 10 {
+    if n == 0 {
+        writeln!(writer, "10");
+        return;
+    } else if n < 10 {
         writeln!(writer, "{}", n);
         return;
     }
     let mut res = String::new();
-    for i in 2..10 {
+    for i in (2..10).rev() {
         while n % i == 0 {
             n /= i;
-            res.push(('0' as u8 as i32 + i) as u8 as char);
+            res.insert(0, ('0' as u8 as i32 + i) as u8 as char);
         }
     }
     if n == 1 {
