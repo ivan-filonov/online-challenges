@@ -60,13 +60,12 @@ struct State {
 };
 
 struct Solver {
-  void        init (const Board& board);
+  Board board;
+
+  void init (const Board& board);
+
   std::string run (const State& state);
 };
-
-void Solver::init (const Board& board)
-{
-}
 
 std::string Solver::run (const State& state)
 {
@@ -174,4 +173,9 @@ void State::read_from (std::istream& in)
     pos[index] = convert_pos (pos_str);
     std::cerr << ix << " " << iy << " " << pos_str << std::endl;
   }
+}
+
+void Solver::init (const Board& initial_board)
+{
+  board = initial_board;
 }
