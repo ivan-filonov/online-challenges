@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <unordered_map>
@@ -40,48 +41,55 @@ static constexpr int movement_masks[14] = {0, bit_l2b | bit_v | bit_r2b, bit_h,
 
 static const std::string& test_input ();
 
-struct Cmd {
-  int rotation;
-  int x;
-  int y;
-
-  std::string to_string ();
-};
+static int pos_mask (int pos);
 
 struct Board {
-  int width;
-  int height;
-  int exit_x;
-
-  std::array<int8_t, 20 * 20> board;
-
-  void read_from (std::istream& in);
-  bool step (int x, int y, int pos, int* out_x, int* out_y, int* out_pos);
-  void apply (const Cmd& cmd);
-};
-
-struct State {
-  std::array<int8_t, 11> x;
-  std::array<int8_t, 11> y;
-  std::array<int8_t, 11> pos;
-
-  int num_rocks;
-
   void read_from (std::istream& in);
 };
 
-enum class SimResult { FORK, WIN, FAIL };
-std::string to_string (SimResult sr);
+struct Entities {
+  void                      pos (int index, int x, int y, int pos);
+  std::tuple<int, int, int> pos (int index) const;
+  int                       num_rocks () const;
+  void                      read_from (std::istream& in);
+
+private:
+  std::array<int8_t, 11 * 3 + 1> data;
+
+  void num_rocks (int num);
+};
 
 struct Solver {
-  Board board;
-
-  void init (const Board& board);
-
-  std::string run (const State& state);
+  void        init (const Board& board);
+  std::string run (const Entities& state);
 };
 
-std::string Solver::run (const State& state)
+void Board::read_from (std::istream& in)
+{
+  int width, height, exit_x;
+  in >> width >> height;
+  std::cerr << "width=" << width << " height=" << height << std::endl;
+  in.ignore ();
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      int cell;
+      in >> cell;
+      std::cerr << (x > 0 ? " " : "") << cell;
+    }
+    in.ignore ();
+  }
+
+  in >> exit_x;
+  std::cerr << "exit x=" << exit_x << std::endl;
+  in.ignore ();
+}
+
+void Solver::init (const Board& initial_board)
+{
+}
+
+std::string Solver::run (const Entities& initial_state)
 {
   return "WAIT";
 }
@@ -93,19 +101,24 @@ int main ()
   auto& out = std::cout;
 #else
   std::cerr << "TEST\n";
-  auto  in = std::istringstream{test_input ()};
-  auto& out = std::cout;
+  auto       in = std::istringstream{test_input ()};
+  auto&      out = std::cout;
 #endif
 
   Board board;
   board.read_from (in);
-  const auto max_step = 4; //(board.width + 1) * board.height
+
+#ifdef TEST
+  const auto max_step = 2;
+#else
+  const auto max_step = 400;
+#endif
 
   Solver solver;
   solver.init (board);
 
   for (int step = 0; step < max_step; ++step) {
-    State state;
+    Entities state;
     state.read_from (in);
     out << solver.run (state) << std::endl;
   }
@@ -149,155 +162,62 @@ static int convert_pos (const std::string& s)
   }
 }
 
-void Board::read_from (std::istream& in)
+static int pos_mask (int pos)
 {
-  in >> width >> height;
-  std::cerr << "width=" << width << " height=" << height << std::endl;
-  in.ignore ();
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      int cell;
-      in >> cell;
-      board[20 * y + x] = cell;
-      std::cerr << (x > 0 ? " " : "") << cell;
-    }
-    in.ignore ();
-    std::cerr << std::endl;
+  switch (pos) {
+  case pos_top: return bits_from_top;
+  case pos_left: return bits_from_left;
+  case pos_right: return bits_from_right;
+  default: return 0;
   }
-  in >> exit_x;
-  in.ignore ();
-  std::cerr << "exit_x=" << exit_x << std::endl;
 }
 
-void State::read_from (std::istream& in)
+void Entities::pos (int index, int x, int y, int pos)
 {
-  int index = 0;
-  int ix = -1;
-  int iy = -1;
+  data[index] = x;
+  data[index + 11] = y;
+  data[index + 22] = pos;
+}
+
+void Entities::num_rocks (int num)
+{
+  if (num < 0 || num > 10) {
+    throw std::runtime_error{"invalid number of rocks: " + std::to_string (num)};
+  }
+  data[33] = num;
+}
+
+std::tuple<int, int, int> Entities::pos (int index) const
+{
+  return {data[index], data[index + 11], data[index + 22]};
+}
+
+int Entities::num_rocks () const
+{
+  return data[33];
+}
+
+void Entities::read_from (std::istream& in)
+{
+  int x, y;
 
   std::string pos_str;
 
-  in >> ix >> iy >> pos_str;
+  in >> x >> y >> pos_str;
+  std::cerr << "I x=" << x << " y=" << y << " pos=" << pos_str << std::endl;
   in.ignore ();
-  x[index] = ix;
-  y[index] = iy;
-  pos[index] = convert_pos (pos_str);
-  std::cerr << ix << " " << iy << " " << pos_str << std::endl;
+  pos (0, x, y, convert_pos (pos_str));
 
+  int num_rocks;
   in >> num_rocks;
   in.ignore ();
-  std::cerr << num_rocks << std::endl;
+  this->num_rocks (num_rocks);
 
-  for (index = 1; index <= num_rocks; ++index) {
-    in >> ix >> iy >> pos_str;
+  for (int i = 0; i < num_rocks; ++i) {
+    in >> x >> y >> pos_str;
+    std::cerr << "R" << (i + 1) << " x=" << x << " y=" << y
+              << " pos=" << pos_str << std::endl;
     in.ignore ();
-    x[index] = ix;
-    y[index] = iy;
-    pos[index] = convert_pos (pos_str);
-    std::cerr << ix << " " << iy << " " << pos_str << std::endl;
-  }
-}
-
-void Solver::init (const Board& initial_board)
-{
-  board = initial_board;
-}
-
-bool Board::step (int x, int y, int pos, int* out_x, int* out_y, int* out_pos)
-{
-  const auto index = y * 20 + x;
-  const auto cell_value = board[index];
-  const auto cell_bits = movement_masks[std::abs (cell_value)];
-  switch (pos) {
-  case pos_top:
-    if (cell_bits & bit_v) {
-      *out_pos = pos_top;
-    } else if (cell_bits & bit_t2l) {
-      *out_pos = pos_right;
-    } else if (cell_bits & bit_t2r) {
-      *out_pos = pos_left;
-    } else {
-      return false;
-    }
-    break;
-  case pos_left:
-    if (cell_bits & bit_h) {
-      *out_pos = pos_left;
-    } else if (cell_bits & bit_l2b) {
-      *out_pos = pos_top;
-    } else {
-      return false;
-    }
-    break;
-  case pos_right:
-    if (cell_bits & bit_h) {
-      *out_pos = pos_right;
-    } else if (cell_bits & bit_r2b) {
-      *out_pos = pos_top;
-    } else {
-      return false;
-    }
-    break;
-  default: return false;
-  }
-  if (*out_pos == pos_top) {
-    *out_x = x;
-    *out_y = y + 1;
-    return *out_y < height || *out_x == exit_x;
-  } else if (*out_pos == pos_left) {
-    *out_x = x + 1;
-    *out_y = y;
-    return *out_x < width;
-  } else if (*out_pos == pos_right) {
-    *out_x = x - 1;
-    *out_y = y;
-    return *out_x >= 0;
-  }
-  return false;
-}
-
-void Board::apply (const Cmd& cmd)
-{
-  if (cmd.rotation == 0) {
-    return;
-  }
-  const int index = cmd.y * 20 + cmd.x;
-
-  auto& ref = board[index];
-  if (ref < 2 || ref > 13) {
-    throw std::runtime_error ("invalid cell rotation");
-  }
-  if (cmd.rotation == -1) {
-    ref = left_rotation[ref];
-    return;
-  }
-  if (cmd.rotation == 1) {
-    ref = right_rotation[ref];
-    return;
-  }
-  throw std::runtime_error ("malformed command");
-}
-
-std::string Cmd::to_string ()
-{
-  if (rotation == 0) {
-    return "WAIT";
-  }
-  std::stringstream ss;
-  ss << x << " " << y;
-  if (rotation < 0) {
-    ss << " LEFT";
-  } else {
-    ss << " RIGHT";
-  }
-  return ss.str ();
-}
-
-std::string to_string (SimResult sr)
-{
-  switch (sr) {
-  case SimResult::FORK: return "FORK";
-  case SimResult::FAIL: return "FAIL";
-  case SimResult::WIN: return "WIN";
+    pos (i + 1, x, y, convert_pos (pos_str));
   }
 }
