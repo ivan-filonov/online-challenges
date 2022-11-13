@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstdint>
 #include <cstdlib>
 #include <iostream>
@@ -45,6 +46,17 @@ static int pos_mask (int pos);
 
 struct Board {
   void read_from (std::istream& in);
+  int  get (int x, int y) const;
+  void put (int x, int y, int cell);
+  int  width () const;
+  int  height () const;
+  int  exit_x () const;
+
+private:
+  std::array<int8_t, 20 * 20 + 3> data;
+
+  void size (int width, int height);
+  void exit_x (int value);
 };
 
 struct Entities {
@@ -52,6 +64,9 @@ struct Entities {
   std::tuple<int, int, int> pos (int index) const;
   int                       num_rocks () const;
   void                      read_from (std::istream& in);
+
+  std::string     to_string () const;
+  static Entities parse (const std::string& s);
 
 private:
   std::array<int8_t, 11 * 3 + 1> data;
@@ -63,27 +78,6 @@ struct Solver {
   void        init (const Board& board);
   std::string run (const Entities& state);
 };
-
-void Board::read_from (std::istream& in)
-{
-  int width, height, exit_x;
-  in >> width >> height;
-  std::cerr << "width=" << width << " height=" << height << std::endl;
-  in.ignore ();
-
-  for (int y = 0; y < height; ++y) {
-    for (int x = 0; x < width; ++x) {
-      int cell;
-      in >> cell;
-      std::cerr << (x > 0 ? " " : "") << cell;
-    }
-    in.ignore ();
-  }
-
-  in >> exit_x;
-  std::cerr << "exit x=" << exit_x << std::endl;
-  in.ignore ();
-}
 
 void Solver::init (const Board& initial_board)
 {
@@ -199,9 +193,10 @@ int Entities::num_rocks () const
 
 void Entities::read_from (std::istream& in)
 {
-  int x, y;
+  int x = 0;
+  int y = 0;
 
-  std::string pos_str;
+  std::string pos_str{};
 
   in >> x >> y >> pos_str;
   std::cerr << "I x=" << x << " y=" << y << " pos=" << pos_str << std::endl;
@@ -220,4 +215,102 @@ void Entities::read_from (std::istream& in)
     in.ignore ();
     pos (i + 1, x, y, convert_pos (pos_str));
   }
+}
+
+int Board::width () const
+{
+  return data[400 + 0];
+}
+
+int Board::height () const
+{
+  return data[400 + 1];
+}
+
+int Board::exit_x () const
+{
+  return data[400 + 2];
+}
+
+void Board::exit_x (int value)
+{
+  data[400 + 2] = value;
+}
+
+void Board::size (int width, int height)
+{
+  data[400 + 0] = width;
+  data[400 + 1] = height;
+}
+
+int Board::get (int x, int y) const
+{
+  return data[y * 20 + x];
+}
+
+void Board::put (int x, int y, int cell)
+{
+  data[y * 20 + x] = cell;
+}
+
+void Board::read_from (std::istream& in)
+{
+  int width, height, exit_x;
+  in >> width >> height;
+  std::cerr << "width=" << width << " height=" << height << std::endl;
+  in.ignore ();
+  size (width, height);
+
+  for (int y = 0; y < height; ++y) {
+    for (int x = 0; x < width; ++x) {
+      int cell;
+      in >> cell;
+      std::cerr << (x > 0 ? " " : "") << cell;
+      put (x, y, cell);
+    }
+    in.ignore ();
+  }
+
+  in >> exit_x;
+  std::cerr << "exit x=" << exit_x << std::endl;
+  in.ignore ();
+  this->exit_x (exit_x);
+}
+
+std::string Entities::to_string () const
+{
+  std::string s;
+  s.resize (2 + 2 * num_rocks (), ' ');
+  for (int i = 0; i <= num_rocks (); ++i) {
+    auto [x, y, pos] = this->pos (i);
+    s[i * 2 + 0] = (((pos & 1) != 0) ? 'A' : 'a') + x;
+    s[i * 2 + 1] = (((pos & 2) != 0) ? 'A' : 'a') + y;
+  }
+  return s;
+}
+
+Entities Entities::parse (const std::string& s)
+{
+  Entities ent;
+  ent.num_rocks (s.length () / 2 - 1);
+  for (int i = 0; i <= ent.num_rocks (); ++i) {
+    int x, y, p;
+    x = s[i * 2 + 0];
+    y = s[i * 2 + 1];
+    p = 0;
+    if (std::isupper (x)) {
+      p += 1;
+      x -= 'A';
+    } else {
+      x -= 'a';
+    }
+    if (std::isupper (y)) {
+      p += 2;
+      y -= 'A';
+    } else {
+      y -= 'a';
+    }
+    ent.pos (i, x, y, p);
+  }
+  return ent;
 }
