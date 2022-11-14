@@ -114,14 +114,29 @@ private:
   std::array<std::array<int8_t, 20>, 20> grid;
 };
 
+struct State {
+  Board                              board;
+  Entities                           first;
+  Entities                           last;
+  int                                commands_available;
+  std::vector<std::array<int8_t, 3>> commands;
+};
+
 class Solver
 {
 public:
   void init (std::istream& in);
   void step (std::istream& in);
 
+  std::array<int8_t, 3> solve (std::shared_ptr<State> first);
+
   Board board;
 };
+
+std::array<int8_t, 3> Solver::solve (std::shared_ptr<State> first)
+{
+  return {};
+}
 
 void Solver::init (std::istream& in)
 {
@@ -132,15 +147,24 @@ void Solver::step (std::istream& in)
 {
   Entities entities;
   entities.read (in);
-  Entities e2;
-  auto     mask = board.move (entities, e2);
-  for (int i = 0; i <= e2.num_rocks (); ++i) {
-    auto pos = e2.get (i);
-    std::cerr << "moved #" << i << " ok=" << std::boolalpha
-              << (mask[i] == MoveResult::OK) << " x=" << pos.x ()
-              << " y=" << pos.y () << " pos=" << convert_pos (pos.pos ()) << "\n";
+
+  auto first_state = std::make_shared<State> ();
+  first_state->board = board;
+  first_state->first = entities;
+  first_state->commands_available = 1;
+
+  auto [cmd_x, cmd_y, cmd_rotate] = solve (std::move (first_state));
+
+  if (cmd_rotate != 0) {
+    std::cout << cmd_x << " " << cmd_y;
   }
-  std::cout << "WAIT" << std::endl;
+  if (cmd_rotate < 0) {
+    std::cout << " LEFT" << std::endl;
+  } else if (cmd_rotate > 0) {
+    std::cout << " RIGHT" << std::endl;
+  } else {
+    std::cout << "WAIT" << std::endl;
+  }
 }
 
 static const std::string& test_input ();
@@ -438,7 +462,7 @@ MoveResult Board::move (Position from, Position& to) const
   default:
     throw std::runtime_error{"invalid new_pos value " + std::to_string (new_pos)};
   }
-  if (move_is_valid) {
+  if (move_is_valid && to.y () < height ()) {
     const auto target_cell_mask = cell_movement_mask (get (to.x (), to.y ()));
     const auto new_pos_bits = pos_mask (new_pos);
     move_is_valid = (target_cell_mask & new_pos_bits) != 0;
