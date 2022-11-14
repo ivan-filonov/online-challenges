@@ -46,6 +46,84 @@ static int rotate_cell_left (int cell);
 static int rotate_cell_right (int cell);
 static int cell_movement_mask (int cell);
 
+class Board
+{
+public:
+  void read (std::istream& in);
+
+private:
+};
+
+class Entities
+{
+public:
+  void read (std::istream& in);
+
+private:
+};
+
+class Solver
+{
+public:
+  void init (std::istream& in);
+  void step (std::istream& in);
+};
+
+void Board::read (std::istream& in)
+{
+  int w, h, e;
+  in >> w >> h;
+  in.ignore ();
+  std::cerr << "board width=" << w << " height=" << h << "\n";
+  for (int y = 0; y < h; ++y) {
+    for (int x = 0; x < w; ++x) {
+      int cell;
+      in >> cell;
+      std::cerr << (x ? " " : "") << cell;
+    }
+    in.ignore ();
+    std::cerr << "\n";
+  }
+  in >> e;
+  in.ignore ();
+  std::cerr << "exit x=" << e << std::endl;
+}
+
+void Entities::read (std::istream& in)
+{
+  int x;
+  int y;
+
+  std::string pos_str;
+
+  in >> x >> y >> pos_str;
+  in.ignore ();
+  std::cerr << "I x=" << x << " y=" << y << " pos=" << pos_str << "\n";
+
+  int r;
+  in >> r;
+  in.ignore ();
+
+  for (int i = 0; i < r; ++i) {
+    in >> x >> y >> pos_str;
+    in.ignore ();
+    std::cerr << "R" << i << " x=" << x << " y=" << y << " pos=" << pos_str << "\n";
+  }
+}
+
+void Solver::init (std::istream& in)
+{
+  Board board;
+  board.read (in);
+}
+
+void Solver::step (std::istream& in)
+{
+  Entities entities;
+  entities.read (in);
+  std::cout << "WAIT" << std::endl;
+}
+
 static const std::string& test_input ();
 
 int main ()
@@ -64,8 +142,11 @@ int main ()
   const auto max_step = 420;
 #endif
 
+  Solver solver;
+  solver.init (in);
+
   for (int step = 0; step < max_step; ++step) {
-    std::cout << "WAIT" << std::endl;
+    solver.step (in);
   }
 }
 
