@@ -292,6 +292,7 @@ public:
       }
       if (mask[i] == MOVE_OK) {
         collisions[to[i].coord_hash ()].push_back (i);
+        collisions[from[i].coord_hash ()].push_back (i);
       }
     }
     for (const auto& [_, indices] : collisions) {
@@ -397,7 +398,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
       if (mask[0] == MOVE_OK && temp[0].x () == state->board.exit_x ()
           && temp[0].y () == state->board.height ()) {
         std::cerr << "see victory at step " << choices_traced << "\n";
-        constexpr bool log377 = false;
+        constexpr bool log400 = false;
         if (log400) {
           for (size_t i = 0; i < state->cmds.size (); ++i) {
             std::cerr << " cmd[" << i << "] is " << state->cmds[i][0] << ", "
@@ -529,7 +530,7 @@ int main ()
 }
 
 //{{BEGIN STABLE
-static const std::string test_input_string = R"(11 10
+static const std::string test_input_string_old = R"(11 10
 0 3 0 0 -3 0 -3 0 -7 2 -2
 0 11 3 13 3 0 -3 0 3 0 0
 0 12 2 12 -11 -13 -3 0 -7 2 -2
@@ -553,6 +554,24 @@ static const std::string test_input_string = R"(11 10
 3 1 LEFT
 1
 8 2 TOP
+)";
+
+static const std::string test_input_string = R"(6 6
+0 -3 -3 -5 1 -1
+-13 11 4 0 -3 1
+11 6 1 0 10 1
+0 0 10 3 3 1
+0 0 0 0 0 3
+0 0 0 0 0 -3
+5
+1 0 TOP
+2
+2 0 TOP
+0 1 LEFT
+1 1 TOP
+2
+2 1 TOP
+0 2 TOP
 )";
 
 static const std::string& test_input ()
