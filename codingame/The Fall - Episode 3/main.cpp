@@ -1,5 +1,3 @@
-#include <cstdarg>
-#include <ios>
 #pragma GCC optimize("O3,inline,omit-frame-pointer,unroll-loops", \
   "unsafe-math-optimizations", "no-trapping-math")
 #pragma GCC option("arch=native", "tune=native", "no-zero-upper")
@@ -48,86 +46,444 @@ enum Bits {
 static int rotate_cell_left (int cell);
 static int rotate_cell_right (int cell);
 static int cell_movement_mask (int cell);
+static int cell_movement_mask_soft (int cell);
 //}}END STABLE
+
+class Entity
+{
+public:
+  int x () const
+  {
+    return data[0];
+  }
+
+  int y () const
+  {
+    return data[1];
+  }
+
+  int coord_hash () const
+  {
+    return y () * 20 + x ();
+  }
+
+  int pos () const
+  {
+    return data[2];
+  }
+
+  void x (int value)
+  {
+    data[0] = value;
+  }
+
+  void y (int value)
+  {
+    data[1] = value;
+  }
+
+  void pos (int value)
+  {
+    data[2] = value;
+  }
+
+  void addx (int value)
+  {
+    data[0] += value;
+  }
+
+  void addy (int value)
+  {
+    data[1] += value;
+  }
+
+  void set (int x, int y, int pos)
+  {
+    data[0] = x;
+    data[1] = y;
+    data[2] = pos;
+  }
+
+private:
+  std::array<int8_t, 3> data;
+};
+
+enum MoveResult { MOVE_OK, MOVE_BAD, NO_MOVE };
 
 class Entities
 {
 public:
-  void read (std::istream& in);
-};
+  void read (std::istream& in)
+  {
+    int x;
+    int y;
 
-void Entities::read (std::istream& in)
-{
-  int x;
-  int y;
+    std::string spos;
 
-  std::string spos;
-
-  in >> x >> y >> spos;
-  in.ignore ();
-  std::cerr << "I x=" << x << " y=" << y << " pos=" << spos << "\n";
-
-  int nr;
-  in >> nr;
-  in.ignore ();
-
-  for (int i = 0; i < nr; ++i) {
     in >> x >> y >> spos;
     in.ignore ();
-    std::cerr << "R#" << i << " x=" << x << " y=" << y << " pos=" << spos << "\n";
+    std::cerr << "I x=" << x << " y=" << y << " pos=" << spos << "\n";
+    this->operator[] (0).set (x, y, convert_pos (spos));
+
+    int nr;
+    in >> nr;
+    in.ignore ();
+    this->num_rocks (nr);
+
+    for (int i = 0; i < nr; ++i) {
+      in >> x >> y >> spos;
+      in.ignore ();
+      std::cerr << "R#" << i << " x=" << x << " y=" << y << " pos=" << spos << "\n";
+      this->operator[] (i).set (x, y, convert_pos (spos));
+    }
+    std::cerr << std::flush;
   }
-  std::cerr << std::flush;
-}
+
+  Entity& operator[] (int index)
+  {
+    return data[index];
+  }
+
+  int num_rocks () const
+  {
+    return num_rocks_;
+  }
+
+  void num_rocks (int value)
+  {
+    num_rocks_ = value;
+  }
+
+  void pack (const std::array<MoveResult, 11>& mask, Entities& out)
+  {
+    out[0] = this->operator[] (0);
+    int            dst = 1;
+    for (int src = 1; src <= num_rocks (); ++src) {
+      if (mask[src] != MOVE_OK) {
+        continue;
+      }
+      out[dst] = this->operator[] (src);
+      ++dst;
+    }
+    out.num_rocks (dst - 1);
+  }
+
+private:
+  int num_rocks_;
+
+  std::array<Entity, 11> data;
+};
 
 class Board
 {
 public:
-  void read (std::istream& in);
-};
-
-void Board::read (std::istream& in)
-{
-  int w;
-  int h;
-  int e;
-
-  in >> w >> h;
-  in.ignore ();
-  std::cerr << "board width=" << w << " height=" << h << "\n";
-
-  for (int y = 0; y < h; ++y) {
-    for (int x = 0; x < w; ++x) {
-      int cell;
-      in >> cell;
-      std::cerr << (x ? " " : "") << cell;
-    }
+  int width () const
+  {
+    return width_;
+  }
+  int height () const
+  {
+    return height_;
+  }
+  int exit_x () const
+  {
+    return exit_x_;
+  }
+  int8_t& cell (int x, int y)
+  {
+    return grid[y][x];
+  }
+  void read (std::istream& in)
+  {
+    in >> width_ >> height_;
     in.ignore ();
-    std::cerr << "\n";
+    std::cerr << "board width=" << width_ << " height=" << height_ << "\n";
+
+    for (int y = 0; y < height_; ++y) {
+      for (int x = 0; x < width_; ++x) {
+        int cell_;
+
+        in >> cell_;
+        std::cerr << (x ? " " : "") << cell_;
+        cell (x, y) = cell_;
+      }
+      in.ignore ();
+      std::cerr << "\n";
+    }
+
+    in >> exit_x_;
+    in.ignore ();
+    std::cerr << "exit x=" << exit_x_ << std::endl;
+  }
+  MoveResult move (const Entity& from, Entity& to)
+  {
+    to = from;
+    // cannot move in current -> no move
+    // can exit to outside -> no move
+    // can exit current, cannot enter next -> bad move
+    // can exit, can enter -> ok
+    const auto entity_bits = pos_mask (from.pos ());
+    const auto cell_bits = cell_movement_mask (cell (from.x (), from.y ()));
+    if (0 == (entity_bits & cell_bits)) {
+      // no valid path through current
+      return NO_MOVE;
+    }
+    int new_pos = from.pos ();
+    switch (from.pos ()) {
+    case pos_top:
+      if (cell_bits & bit_t2l) {
+        new_pos = pos_right;
+      } else if (cell_bits & bit_t2r) {
+        new_pos = pos_left;
+      }
+      break;
+    case pos_left:
+      if (cell_bits & bit_l2b) {
+        new_pos = pos_top;
+      }
+      break;
+    case pos_right:
+      if (cell_bits & bit_r2b) {
+        new_pos = pos_top;
+      }
+      break;
+    }
+    to.pos (new_pos);
+    bool hard_move = false;
+    bool exit_point = false;
+    switch (new_pos) {
+    case pos_top:
+      to.addy (1);
+      hard_move = to.y () < height () || to.x () == exit_x ();
+      exit_point = to.y () == height () && to.x () == exit_x ();
+      break;
+    case pos_left:
+      to.addx (1);
+      hard_move = to.x () < width ();
+      break;
+    case pos_right:
+      to.addx (-1);
+      hard_move = to.x () >= 0;
+      break;
+    }
+    if (!hard_move) {
+      return NO_MOVE;
+    }
+    if (exit_point) {
+      return MOVE_OK;
+    }
+    const int dst_cell = std::abs (cell (to.x (), to.y ()));
+    if (cell_movement_mask (dst_cell) & pos_mask (new_pos)) {
+      return MOVE_OK;
+    }
+    const bool soft_move = std::abs (dst_cell) >= 2;
+    return soft_move ? MOVE_BAD : NO_MOVE;
+  }
+  std::array<MoveResult, 11> move (Entities& from, Entities& to)
+  {
+    std::array<MoveResult, 11> mask;
+    mask.fill (NO_MOVE);
+    std::unordered_map<int, std::vector<int>> collisions;
+    to.num_rocks (from.num_rocks ());
+    for (int i = 0; i <= from.num_rocks (); ++i) {
+      mask[i] = move (from[i], to[i]);
+      if (i == 0 && mask[i] == NO_MOVE) {
+        return mask;
+      }
+      if (mask[i] == MOVE_OK) {
+        collisions[to[i].coord_hash ()].push_back (i);
+      }
+    }
+    for (const auto& [_, indices] : collisions) {
+      if (indices.size () == 1) {
+        continue;
+      }
+      for (int i : indices) {
+        mask[i] = MOVE_BAD;
+      }
+    }
+    return mask;
   }
 
-  in >> e;
-  in.ignore ();
-  std::cerr << "exit x=" << e << std::endl;
-}
+private:
+  int width_;
+  int height_;
+  int exit_x_;
+
+  std::array<std::array<int8_t, 20>, 20> grid;
+};
+
+
+struct State {
+  using Ptr = std::shared_ptr<State>;
+
+  Board                           board;
+  Entities                        entities;
+  int                             cmd_budget;
+  std::vector<std::array<int, 3>> cmds;
+
+  State (const Board& board_, const Entities& entities_)
+  : board (board_)
+  , entities (entities_)
+  {
+    cmd_budget = 1;
+  }
+
+  static Ptr create (const Board& board_, const Entities& entities_)
+  {
+    return std::make_shared<State> (board_, entities_);
+  }
+
+  Ptr clone () const
+  {
+    Ptr cloned = create (board, entities);
+    cloned->cmd_budget = cmd_budget;
+    cloned->cmds = cmds;
+    return cloned;
+  }
+};
 
 class Solver
 {
 public:
-  void init (std::istream& in);
-  void step (std::istream& in);
+  void               init (std::istream& in);
+  void               step (std::istream& in);
+  std::array<int, 3> solve (State::Ptr first_state);
+
+private:
+  Board board;
 };
 
 void Solver::init (std::istream& in)
 {
-  Board board;
   board.read (in);
+}
+
+std::array<int, 3> Solver::solve (State::Ptr first_state)
+{
+  std::vector<State::Ptr> bag;
+  bag.push_back (first_state);
+  int choices_traced = 0;
+  while (!bag.empty ()) {
+    auto state = bag.back ();
+    bag.pop_back ();
+    ++choices_traced;
+
+    Entities e[2];
+
+    int ei = 0;
+    int cnt = 0;
+
+    e[ei] = state->entities;
+    for (;; ei = 1 - ei, cnt += 1) {
+      auto* from = &e[ei];
+      auto* to = &e[1 - ei];
+
+      Entities temp;
+
+      auto mask = state->board.move (*from, temp);
+      if (mask[0] == NO_MOVE) {
+        // std::cerr << "interrupting [" << choices_traced
+        //           << "] as cannot move from " << (*from)[0].x () << ","
+        //           << (*from)[0].y () << "," << (*from)[0].pos () << " (cell "
+        //           << (int)state->board.cell ((*from)[0].x (), (*from)[0].y ()) << ")\n";
+        break;
+      }
+
+      // std::cerr << "[" << choices_traced << "] testing move of 0 from "
+      //           << (*from)[0].x () << "," << (*from)[0].y () << " to "
+      //           << temp[0].x () << "," << temp[0].y () << " => " << mask[0] << "\n";
+
+      if (mask[0] == MOVE_OK && temp[0].x () == state->board.exit_x ()
+          && temp[0].y () == state->board.height ()) {
+        std::cerr << "see victory at step " << choices_traced << "\n";
+        if (state->cmds.empty ()) {
+          return {};
+        } else {
+          return state->cmds.front ();
+        }
+      }
+
+      for (int i = 0; i <= temp.num_rocks (); ++i) {
+        if (mask[i] == NO_MOVE) {
+          continue;
+        }
+        auto ent = temp[i];
+        int  cell = state->board.cell (ent.x (), ent.y ());
+        if (cell >= 2) {
+          // std::cerr << "will fork " << i << " at " << ent.x () << ", " << ent.y () << "\n";
+          {
+            auto cloned = state->clone ();
+            // cloned->entities = *from;
+            cloned->cmd_budget += cnt - 1;
+            std::array<int, 3> cmd = {ent.x (), ent.y (), 1};
+            cloned->cmds.emplace_back (cmd);
+            const int cell = cloned->board.cell (ent.x (), ent.y ());
+            const int rcell = rotate_cell_right (cell);
+            // std::cerr << " fork at " << ent.x () << "," << ent.y () << " "
+            //           << cell << " -> " << rcell << "\n";
+            cloned->board.cell (ent.x (), ent.y ()) = -rcell;
+            bag.push_back (cloned);
+          }
+          if (cell >= 6) {
+            {
+              auto cloned = state->clone ();
+              // cloned->entities = *from;
+              cloned->cmd_budget += cnt - 1;
+              std::array<int, 3> cmd = {ent.x (), ent.y (), -1};
+              cloned->cmds.emplace_back (cmd);
+              const int cell = cloned->board.cell (ent.x (), ent.y ());
+              const int rcell = rotate_cell_left (cell);
+              // std::cerr << " fork at " << ent.x () << "," << ent.y () << " "
+              //           << cell << " -> " << rcell << "\n";
+              cloned->board.cell (ent.x (), ent.y ()) = -rcell;
+              bag.push_back (cloned);
+            }
+            if (state->cmd_budget + cnt >= 2) {
+              auto cloned = state->clone ();
+              // cloned->entities = *from;
+              std::array<int, 3> cmd = {ent.x (), ent.y (), 1};
+              cloned->cmds.emplace_back (cmd);
+              cloned->cmds.emplace_back (cmd);
+              const int cell = cloned->board.cell (ent.x (), ent.y ());
+              const int rcell = rotate_cell_right (rotate_cell_right (cell));
+              // std::cerr << " fork at " << ent.x () << "," << ent.y () << " "
+              //           << cell << " -> " << rcell << "\n";
+              cloned->board.cell (ent.x (), ent.y ()) = -rcell;
+              bag.push_back (cloned);
+            }
+          }
+        }
+      }
+
+      temp.pack (mask, *to);
+      if (mask[0] == MOVE_BAD) {
+        // std::cerr << " ###ending choice " << choices_traced
+        //           << " as move result is " << mask[0] << "\n";
+        break;
+      }
+    }
+  }
+  std::cerr << "move search failed, " << choices_traced << " steps\n";
+  return {};
 }
 
 void Solver::step (std::istream& in)
 {
   Entities entities;
   entities.read (in);
-  std::cout << "WAIT" << std::endl;
+
+  auto [x, y, cmd] = solve (State::create (board, entities));
+
+  if (cmd == 0) {
+    std::cout << "WAIT" << std::endl;
+  } else if (cmd > 0) {
+    std::cout << x << " " << y << " RIGHT" << std::endl;
+    board.cell (x, y) = rotate_cell_right (board.cell (x, y));
+  } else {
+    std::cout << x << " " << y << " LEFT" << std::endl;
+    board.cell (x, y) = rotate_cell_left (board.cell (x, y));
+  }
 }
 
 static const std::string& test_input ();
@@ -230,6 +586,24 @@ static constexpr int movement_masks[14] = {0, bit_l2b | bit_v | bit_r2b, bit_h,
 
 static int cell_movement_mask (int cell)
 {
-  return movement_masks[cell];
+  return movement_masks[std::abs (cell)];
+}
+
+static const std::array<int, 14> soft_masks = [] {
+  std::array<int, 14> array;
+  array.fill (0);
+  for (int i = 0; i < 14; ++i) {
+    int c = i;
+    for (int j = 0; j < 4; ++j) {
+      array[i] |= movement_masks[c];
+      c = rotate_cell_right (c);
+    }
+  }
+  return array;
+}();
+
+static int cell_movement_mask_soft (int cell)
+{
+  return soft_masks[std::abs (cell)];
 }
 //}}END STABLE
