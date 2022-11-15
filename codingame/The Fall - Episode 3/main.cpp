@@ -130,7 +130,7 @@ public:
     in.ignore ();
     this->num_rocks (nr);
 
-    for (int i = 0; i < nr; ++i) {
+    for (int i = 1; i <= nr; ++i) {
       in >> x >> y >> spos;
       in.ignore ();
       std::cerr << "R#" << i << " x=" << x << " y=" << y << " pos=" << spos << "\n";
@@ -397,6 +397,10 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
       if (mask[0] == MOVE_OK && temp[0].x () == state->board.exit_x ()
           && temp[0].y () == state->board.height ()) {
         std::cerr << "see victory at step " << choices_traced << "\n";
+        // for (size_t i = 0; i < state->cmds.size (); ++i) {
+        //   std::cerr << " cmd[" << i << "] is " << state->cmds[i][0] << ", "
+        //             << state->cmds[i][1] << ", " << state->cmds[i][2] << "\n";
+        // }
         if (state->cmds.empty ()) {
           return {};
         } else {
@@ -414,7 +418,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
           // std::cerr << "will fork " << i << " at " << ent.x () << ", " << ent.y () << "\n";
           {
             auto cloned = state->clone ();
-            // cloned->entities = *from;
+            cloned->entities = *from;
             cloned->cmd_budget += cnt - 1;
             std::array<int, 3> cmd = {ent.x (), ent.y (), 1};
             cloned->cmds.emplace_back (cmd);
@@ -428,7 +432,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
           if (cell >= 6) {
             {
               auto cloned = state->clone ();
-              // cloned->entities = *from;
+              cloned->entities = *from;
               cloned->cmd_budget += cnt - 1;
               std::array<int, 3> cmd = {ent.x (), ent.y (), -1};
               cloned->cmds.emplace_back (cmd);
@@ -441,7 +445,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
             }
             if (state->cmd_budget + cnt >= 2) {
               auto cloned = state->clone ();
-              // cloned->entities = *from;
+              cloned->entities = *from;
               std::array<int, 3> cmd = {ent.x (), ent.y (), 1};
               cloned->cmds.emplace_back (cmd);
               cloned->cmds.emplace_back (cmd);
