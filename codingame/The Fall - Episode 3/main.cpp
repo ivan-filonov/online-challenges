@@ -398,8 +398,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
       if (mask[0] == MOVE_OK && temp[0].x () == state->board.exit_x ()
           && temp[0].y () == state->board.height ()) {
         std::cerr << "see victory at step " << choices_traced << "\n";
-        constexpr bool log400 = false;
-        if (log400) {
+        if (true) {
           for (size_t i = 0; i < state->cmds.size (); ++i) {
             std::cerr << " cmd[" << i << "] is " << state->cmds[i][0] << ", "
                       << state->cmds[i][1] << ", " << state->cmds[i][2] << "\n";
@@ -412,12 +411,20 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
         }
       }
 
+      std::unordered_set<int> locked_cells;
+      for (int i = 0; i <= from->num_rocks (); ++i) {
+        locked_cells.insert (from->operator[] (i).coord_hash ());
+      }
+
       for (int i = 0; i <= temp.num_rocks (); ++i) {
         if (mask[i] == NO_MOVE) {
           continue;
         }
         auto ent = temp[i];
-        int  cell = state->board.cell (ent.x (), ent.y ());
+        if (locked_cells.count (ent.coord_hash ())) {
+          continue;
+        }
+        int cell = state->board.cell (ent.x (), ent.y ());
         if (cell >= 2 && state->cmd_budget + cnt >= 1) {
           // std::cerr << "will fork " << i << " at " << ent.x () << ", " << ent.y () << "\n";
           {
