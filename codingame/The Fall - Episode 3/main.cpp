@@ -397,10 +397,13 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
       if (mask[0] == MOVE_OK && temp[0].x () == state->board.exit_x ()
           && temp[0].y () == state->board.height ()) {
         std::cerr << "see victory at step " << choices_traced << "\n";
-        // for (size_t i = 0; i < state->cmds.size (); ++i) {
-        //   std::cerr << " cmd[" << i << "] is " << state->cmds[i][0] << ", "
-        //             << state->cmds[i][1] << ", " << state->cmds[i][2] << "\n";
-        // }
+        constexpr bool log377 = false;
+        if (log400) {
+          for (size_t i = 0; i < state->cmds.size (); ++i) {
+            std::cerr << " cmd[" << i << "] is " << state->cmds[i][0] << ", "
+                      << state->cmds[i][1] << ", " << state->cmds[i][2] << "\n";
+          }
+        }
         if (state->cmds.empty ()) {
           return {};
         } else {
@@ -414,7 +417,7 @@ std::array<int, 3> Solver::solve (State::Ptr first_state)
         }
         auto ent = temp[i];
         int  cell = state->board.cell (ent.x (), ent.y ());
-        if (cell >= 2) {
+        if (cell >= 2 && state->cmd_budget + cnt >= 1) {
           // std::cerr << "will fork " << i << " at " << ent.x () << ", " << ent.y () << "\n";
           {
             auto cloned = state->clone ();
@@ -479,14 +482,23 @@ void Solver::step (std::istream& in)
 
   auto [x, y, cmd] = solve (State::create (board, entities));
 
+  constexpr bool log484 = false;
   if (cmd == 0) {
     std::cout << "WAIT" << std::endl;
   } else if (cmd > 0) {
     std::cout << x << " " << y << " RIGHT" << std::endl;
     board.cell (x, y) = rotate_cell_right (board.cell (x, y));
+    if (log484) {
+      std::cerr << "changed cell at " << x << ", " << y << " to "
+                << (int)board.cell (x, y) << "\n";
+    }
   } else {
     std::cout << x << " " << y << " LEFT" << std::endl;
     board.cell (x, y) = rotate_cell_left (board.cell (x, y));
+    if (log484) {
+      std::cerr << "changed cell at " << x << ", " << y << " to "
+                << (int)board.cell (x, y) << "\n";
+    }
   }
 }
 
@@ -503,7 +515,7 @@ int main ()
 #endif
 
 #ifdef TEST
-  const auto max_step = 2;
+  const auto max_step = 4;
 #else
   const auto max_step = 420;
 #endif
@@ -535,6 +547,12 @@ static const std::string test_input_string = R"(11 10
 2
 8 0 TOP
 4 0 TOP
+2 1 LEFT
+1
+8 1 TOP
+3 1 LEFT
+1
+8 2 TOP
 )";
 
 static const std::string& test_input ()
