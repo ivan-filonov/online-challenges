@@ -299,8 +299,23 @@ public:
       if (indices.size () == 1) {
         continue;
       }
-      for (int i : indices) {
-        mask[i] = MOVE_BAD;
+      // validate collisions:
+      for (int idx1 = 0; idx1 < indices.size (); ++idx1) {
+        const int i = indices[idx1];
+        for (int idx2 = idx1 + 1; idx2 < indices.size (); ++idx2) {
+          const int j = indices[idx2];
+          if (to[i].coord_hash () == to[j].coord_hash ()) {
+            mask[i] = MOVE_BAD;
+            mask[j] = MOVE_BAD;
+            break;
+          }
+          if (to[i].coord_hash () == from[j].coord_hash ()
+              && to[j].coord_hash () == from[i].coord_hash ()) {
+            mask[i] = MOVE_BAD;
+            mask[j] = MOVE_BAD;
+            break;
+          }
+        }
       }
     }
     return mask;
