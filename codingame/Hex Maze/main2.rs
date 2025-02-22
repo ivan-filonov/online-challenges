@@ -4,7 +4,7 @@ const ECHO: bool = false;
 const DEBUG: bool = true;
 
 mod v1 {
-    use core::fmt;
+    use std::fmt;
     use std::{
         collections::{HashMap, VecDeque},
         io::{BufRead, BufReader, BufWriter, Read, Write},
